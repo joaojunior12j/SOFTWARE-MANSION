@@ -1,0 +1,13 @@
+{
+  "event_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "timestamp": "2026-10-05T21:22:00Z",
+  "account_id": "1234",
+  "source_type": "PERIMETER_SENSOR",
+  "device_hardware_id": "PIR-ZONA-01-NORTE",
+  "zone_partition": "01",
+  "zone_number": 3,
+  "sia_code": "BA",
+  "event_status": "ACTIVE",
+  "priority_level": "CRITICAL",
+  "correlation_id": null
+}

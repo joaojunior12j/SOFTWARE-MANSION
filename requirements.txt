@@ -1,0 +1,16 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.0.0
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.13.0
+asyncpg>=0.29.0
+paho-mqtt>=2.0.0
+simpy>=4.1.1
+onvif-zeep>=0.2.12
+pyyaml>=6.0
+python-jose[cryptography]
+passlib[bcrypt]
+pytest>=8.0
+pytest-asyncio>=0.23
+httpx
+

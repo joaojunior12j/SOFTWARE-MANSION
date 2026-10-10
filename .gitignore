@@ -1,0 +1,42 @@
+# Segredos e configuração local
+.env*
+!.env.example
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+
+# Ambientes e dependências locais
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ruff_cache/
+node_modules/
+dist/
+
+# IDE, sistema operacional e arquivos temporários
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+tmp/
+
+# Dados gerados e persistência local
+output/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+mqtt_data/
+mqtt_log/
+

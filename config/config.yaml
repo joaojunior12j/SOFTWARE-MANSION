@@ -1,0 +1,58 @@
+system:
+  name: "PSIM Mansion"
+  version: "1.0.0"
+  account_id: "1234"
+
+mqtt:
+  host: "localhost"
+  port: 1883
+  keepalive: 60
+  topics:
+    events: "mansao/{account_id}/eventos/#"
+    simulator_control: "mansao/{account_id}/simulador/controle"
+
+database:
+  url: "postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "http://localhost:5173"
+
+correlation_engine:
+  window_seconds: 60
+  jammer_window_seconds: 15
+
+simulator:
+  default_scenario: "wall_jump"
+  speed_multiplier: 1.0
+
+risk_calendar:
+  high_risk_times:
+    - weekday: 6
+      hour: 23
+    - weekday: 4
+      hour: 10
+    - weekday: 5
+      hour: 0
+    - weekday: 5
+      hour: 3
+    - weekday: 1
+      hour: 4
+  high_risk_holidays:
+    - "2027-02-28"
+    - "2027-04-21"
+
+sensors:
+  pir:
+    p_base: 0.97
+    alpha: 0.35
+    body_temperature: 36.5
+    t_ambient_default: 25.0
+  beam_iv:
+    suspicious_min_block_ms: 50
+    min_block_ms: 100
+  microwave:
+    wind_false_alarm_rate_per_hour: 0.5
+
