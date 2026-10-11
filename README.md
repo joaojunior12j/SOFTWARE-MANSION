@@ -75,6 +75,21 @@ Com Mosquitto e TimescaleDB ativos, execute a validação ponta a ponta com:
 python -m tests.smoke_day5
 ```
 
+## Dia 6 - Cenário wall_jump
+
+Execute o cenário documentado de invasão pelo muro:
+
+```powershell
+python simulate.py --scenario wall_jump --account 1234
+```
+
+A CLI publica quatro eventos MQTT canônicos na sequência Sísmico, Feixe IV,
+PIR e Câmera IVA. O smoke test dedicado pode ser executado com:
+
+```powershell
+python -m tests.smoke_day6
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

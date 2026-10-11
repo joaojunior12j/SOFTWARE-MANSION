@@ -7,9 +7,10 @@ from collections.abc import Mapping, Sequence
 import math
 from typing import Any
 
+from backend.core.event_bus import EventPublisher
 from backend.core.settings import load_settings
-from backend.simulator.engine import Scenario, SimulationEngine
-from backend.simulator.scenarios import SCENARIOS
+from backend.simulator.engine import EventSink, Scenario, SimulationEngine
+from backend.simulator.scenarios import build_scenarios
 
 
 def positive_float(value: str) -> float:
@@ -58,10 +59,15 @@ def main(
     argv: Sequence[str] | None = None,
     settings: Mapping[str, Any] | None = None,
     scenarios: Mapping[str, Scenario] | None = None,
+    event_sink: EventSink | None = None,
 ) -> int:
     """Parse arguments, execute the selected scenario and print a summary."""
     resolved_settings = settings or load_settings()
-    registered = SCENARIOS if scenarios is None else scenarios
+    registered = (
+        build_scenarios(resolved_settings)
+        if scenarios is None
+        else scenarios
+    )
     engine = SimulationEngine(registered)
     parser = build_parser(resolved_settings)
     args = parser.parse_args(argv)
@@ -71,11 +77,32 @@ def main(
             print(name)
         return 0
 
-    try:
-        result = engine.run(args.scenario, args.account, args.speed)
-    except ValueError as error:
+    if args.scenario not in engine.available_scenarios:
         available = ", ".join(engine.available_scenarios) or "nenhum"
-        parser.error(f"{error}; disponíveis: {available}")
+        parser.error(
+            f"unknown scenario: {args.scenario}; disponíveis: {available}"
+        )
+
+    if event_sink is not None:
+        result = engine.run(
+            args.scenario,
+            args.account,
+            args.speed,
+            event_sink,
+        )
+    else:
+        mqtt = resolved_settings["mqtt"]
+        with EventPublisher(
+            host=mqtt["host"],
+            port=mqtt["port"],
+            keepalive=mqtt["keepalive"],
+        ) as publisher:
+            result = engine.run(
+                args.scenario,
+                args.account,
+                args.speed,
+                publisher.publish,
+            )
 
     print(
         f"scenario={result.scenario} account={args.account} "

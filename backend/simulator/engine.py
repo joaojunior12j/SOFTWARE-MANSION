@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 from typing import Any, Callable, Generator, Mapping, TypeAlias
 
@@ -11,12 +11,20 @@ import simpy
 from backend.api.schemas import AlarmEvent
 
 
-@dataclass(frozen=True)
+EventSink: TypeAlias = Callable[[AlarmEvent], Any]
+
+
+@dataclass
 class ScenarioContext:
     """Runtime values supplied to every simulator scenario."""
 
     account_id: str
     speed_multiplier: float = 1.0
+    event_sink: EventSink | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
 
     def __post_init__(self) -> None:
         """Reject incomplete account and invalid simulation speed values."""
@@ -35,6 +43,11 @@ class ScenarioContext:
                 "scenario_seconds must be finite and non-negative"
             )
         return scenario_seconds / self.speed_multiplier
+
+    def emit(self, event: AlarmEvent) -> None:
+        """Forward one event to the configured live sink, when present."""
+        if self.event_sink is not None:
+            self.event_sink(event)
 
 
 ScenarioProcess: TypeAlias = Generator[
@@ -73,6 +86,7 @@ class SimulationEngine:
         scenario: str,
         account_id: str,
         speed_multiplier: float = 1.0,
+        event_sink: EventSink | None = None,
     ) -> SimulationResult:
         """Execute one registered scenario until all its events complete."""
         try:
@@ -80,7 +94,7 @@ class SimulationEngine:
         except KeyError as error:
             raise ValueError(f"unknown scenario: {scenario}") from error
 
-        context = ScenarioContext(account_id, speed_multiplier)
+        context = ScenarioContext(account_id, speed_multiplier, event_sink)
         environment = simpy.Environment()
         process = environment.process(handler(environment, context))
         environment.run()

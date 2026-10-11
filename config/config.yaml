@@ -27,6 +27,38 @@ correlation_engine:
 simulator:
   default_scenario: "wall_jump"
   speed_multiplier: 1.0
+  scenarios:
+    wall_jump:
+      random_seed: 1
+      beam_block_ms: 180
+      timings_seconds:
+        seismic: 0
+        beam: 2
+        pir: 4
+        camera: 6
+      camera_line:
+        start: [0.0, -1.0]
+        end: [0.0, 1.0]
+      camera_movement:
+        previous: [-1.0, 0.0]
+        current: [1.0, 0.0]
+      devices:
+        seismic:
+          hardware_id: "SEISMIC-MURO-NORTE"
+          zone_partition: "01"
+          zone_number: 1
+        beam:
+          hardware_id: "BEAM-MURO-NORTE"
+          zone_partition: "01"
+          zone_number: 1
+        pir:
+          hardware_id: "PIR-PERIMETRO-NORTE"
+          zone_partition: "01"
+          zone_number: 2
+        camera:
+          hardware_id: "CAMERA-PERIMETRO-NORTE"
+          zone_partition: "01"
+          zone_number: 3
 
 risk_calendar:
   high_risk_times:

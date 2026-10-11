@@ -69,6 +69,7 @@ class SimulatorCLITests(unittest.TestCase):
                 ["--scenario", "wall_jump", "--account", "1234"],
                 settings=SETTINGS,
                 scenarios={"wall_jump": sample_scenario},
+                event_sink=lambda event: None,
             )
 
         self.assertEqual(exit_code, 0)
