@@ -105,6 +105,19 @@ desconectada, timeout SIA DC-09 e PIR ativo. Valide a integração MQTT com:
 python -m tests.smoke_day7
 ```
 
+## Dia 8 - Motor CEP base
+
+O consumidor MQTT mantém janelas deslizantes isoladas por conta e partição,
+descarta eventos expirados e persiste correlações com um `correlation_id`
+comum a todos os eventos do incidente. As regras R01 e R02 serão registradas
+no Dia 9.
+
+Com o TimescaleDB ativo, valide a persistência real com:
+
+```powershell
+python -m tests.smoke_day8
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

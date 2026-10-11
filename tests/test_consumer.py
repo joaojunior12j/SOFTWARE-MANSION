@@ -193,3 +193,85 @@ class EventConsumerTests(unittest.TestCase):
         self.assertTrue(self.client.disconnected)
         self.assertTrue(self.client.loop_stopped)
         self.assertTrue(self.repository.closed)
+
+
+class OrderedEventRepository(FakeRepository):
+    """Record event persistence in a shared call sequence."""
+
+    def __init__(self, calls) -> None:
+        super().__init__()
+        self.calls = calls
+
+    async def save(self, event, raw_payload) -> None:
+        self.calls.append(("event", event.event_id))
+
+
+class FakeCorrelationEngine:
+    """Return one marker result while recording evaluation order."""
+
+    def __init__(self, calls) -> None:
+        self.calls = calls
+        self.result = object()
+
+    def process(self, event):
+        self.calls.append(("engine", event.event_id))
+        return (self.result,)
+
+
+class FakeCorrelationRepository:
+    """Record correlation persistence in a shared call sequence."""
+
+    def __init__(self, calls) -> None:
+        self.calls = calls
+
+    async def save(self, result) -> None:
+        self.calls.append(("correlation", result))
+
+
+class EventConsumerCorrelationTests(unittest.IsolatedAsyncioTestCase):
+    """Verify MQTT events are stored before CEP evaluation and linking."""
+
+    async def test_persists_before_correlating(self) -> None:
+        calls = []
+        event_repository = OrderedEventRepository(calls)
+        correlation_engine = FakeCorrelationEngine(calls)
+        correlation_repository = FakeCorrelationRepository(calls)
+        consumer = EventConsumer(
+            host="localhost",
+            port=1883,
+            keepalive=60,
+            topic="mansao/1234/eventos/#",
+            repository=event_repository,
+            loop=FakeLoop(),
+            client=FakeClient(),
+            correlation_engine=correlation_engine,
+            correlation_repository=correlation_repository,
+        )
+        event, raw_payload = parse_message(
+            json.dumps(CANONICAL_EVENT).encode("utf-8")
+        )
+
+        await consumer._persist_and_correlate(event, raw_payload)
+
+        self.assertEqual(
+            [call[0] for call in calls],
+            ["event", "engine", "correlation"],
+        )
+
+    async def test_requires_repository_when_engine_is_enabled(self) -> None:
+        consumer = EventConsumer(
+            host="localhost",
+            port=1883,
+            keepalive=60,
+            topic="mansao/1234/eventos/#",
+            repository=FakeRepository(),
+            loop=FakeLoop(),
+            client=FakeClient(),
+            correlation_engine=FakeCorrelationEngine([]),
+        )
+        event, raw_payload = parse_message(
+            json.dumps(CANONICAL_EVENT).encode("utf-8")
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "required"):
+            await consumer._persist_and_correlate(event, raw_payload)

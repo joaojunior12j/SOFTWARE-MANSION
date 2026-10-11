@@ -11,8 +11,10 @@ import paho.mqtt.client as mqtt
 from pydantic import ValidationError
 
 from backend.api.schemas import AlarmEvent
+from backend.core.correlation_engine import CorrelationEngine
 from backend.core.settings import load_settings
 from backend.core.topics import event_subscription_topic
+from backend.db.correlation_repository import CorrelationRepository
 from backend.db.repository import EventRepository
 
 
@@ -39,12 +41,16 @@ class EventConsumer:
         repository: EventRepository,
         loop: asyncio.AbstractEventLoop,
         client: mqtt.Client | None = None,
+        correlation_engine: CorrelationEngine | None = None,
+        correlation_repository: CorrelationRepository | None = None,
     ) -> None:
         self.host = host
         self.port = port
         self.keepalive = keepalive
         self.topic = topic
         self.repository = repository
+        self.correlation_engine = correlation_engine
+        self.correlation_repository = correlation_repository
         self.loop = loop
         self.client = client or mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
@@ -86,7 +92,7 @@ class EventConsumer:
             return
 
         future = asyncio.run_coroutine_threadsafe(
-            self.repository.save(event, raw_payload),
+            self._persist_and_correlate(event, raw_payload),
             self.loop,
         )
         future.add_done_callback(self._log_persistence_failure)
@@ -96,7 +102,21 @@ class EventConsumer:
         try:
             future.result()
         except Exception:
-            LOGGER.exception("failed to persist MQTT event")
+            LOGGER.exception("failed to persist or correlate MQTT event")
+
+    async def _persist_and_correlate(
+        self,
+        event: AlarmEvent,
+        raw_payload: dict[str, Any],
+    ) -> None:
+        """Persist an event before evaluating and storing correlations."""
+        await self.repository.save(event, raw_payload)
+        if self.correlation_engine is None:
+            return
+        if self.correlation_repository is None:
+            raise RuntimeError("correlation_repository is required")
+        for result in self.correlation_engine.process(event):
+            await self.correlation_repository.save(result)
 
     async def start(self, timeout: float = 10.0) -> None:
         """Connect, start the network loop, and wait for the subscription."""
@@ -108,6 +128,8 @@ class EventConsumer:
         """Disconnect MQTT and close the database pool."""
         self.client.disconnect()
         self.client.loop_stop()
+        if self.correlation_repository is not None:
+            await self.correlation_repository.close()
         await self.repository.close()
 
 
@@ -117,6 +139,10 @@ async def run() -> None:
     mqtt_settings = settings["mqtt"]
     account_id = settings["system"]["account_id"]
     repository = EventRepository(settings["database"]["url"])
+    correlation_engine = CorrelationEngine(
+        settings["correlation_engine"]["window_seconds"]
+    )
+    correlation_repository = CorrelationRepository(engine=repository.engine)
     consumer = EventConsumer(
         host=mqtt_settings["host"],
         port=mqtt_settings["port"],
@@ -124,6 +150,8 @@ async def run() -> None:
         topic=event_subscription_topic(account_id),
         repository=repository,
         loop=asyncio.get_running_loop(),
+        correlation_engine=correlation_engine,
+        correlation_repository=correlation_repository,
     )
     await consumer.start()
     LOGGER.info("consuming %s", consumer.topic)
