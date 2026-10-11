@@ -118,6 +118,24 @@ Com o TimescaleDB ativo, valide a persistência real com:
 python -m tests.smoke_day8
 ```
 
+## Dia 9 - Regras CEP e reconhecimento
+
+O consumidor registra as regras `R01_JAMMER` e `R02_MULTI_SENSOR`, cria alarmes
+`CRITICAL` e disponibiliza a transição ISA-18.2:
+
+```http
+POST /api/alarmes/{alarm_id}/acknowledge
+Content-Type: application/json
+
+{"acknowledged_by":"UUID-DO-OPERADOR"}
+```
+
+Valide regras, banco e reconhecimento com:
+
+```powershell
+python -m tests.smoke_day9
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

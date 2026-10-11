@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from backend.api.schemas import AlarmEvent
 from backend.core.correlation_engine import CorrelationEngine
+from backend.core.correlation_rules import build_rules
 from backend.core.settings import load_settings
 from backend.core.topics import event_subscription_topic
 from backend.db.correlation_repository import CorrelationRepository
@@ -140,7 +141,8 @@ async def run() -> None:
     account_id = settings["system"]["account_id"]
     repository = EventRepository(settings["database"]["url"])
     correlation_engine = CorrelationEngine(
-        settings["correlation_engine"]["window_seconds"]
+        settings["correlation_engine"]["window_seconds"],
+        rules=build_rules(settings),
     )
     correlation_repository = CorrelationRepository(engine=repository.engine)
     consumer = EventConsumer(

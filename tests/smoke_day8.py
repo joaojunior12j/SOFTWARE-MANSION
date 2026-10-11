@@ -18,6 +18,9 @@ class SmokeRule:
 
     rule_id = "SMOKE_DAY8"
     confidence_score = 1.0
+    title = "Smoke Day 8"
+    description = "Correlation persistence smoke test"
+    priority_level = "LOW"
 
     def match(self, events):
         return events if len(events) == 2 else None
@@ -96,6 +99,13 @@ async def run() -> None:
     finally:
         if persisted_event_ids:
             async with event_repository.engine.begin() as connection:
+                await connection.execute(
+                    text(
+                        "DELETE FROM alarms "
+                        "WHERE correlation_id = :correlation_id"
+                    ),
+                    {"correlation_id": str(correlation_id)},
+                )
                 await connection.execute(
                     text(
                         "DELETE FROM events "

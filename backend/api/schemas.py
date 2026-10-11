@@ -72,3 +72,11 @@ class AlarmRead(BaseModel):
     acknowledged_at: datetime | None = None
     acknowledged_by: UUID | None = None
     cleared_at: datetime | None = None
+
+
+class AlarmAcknowledgeRequest(BaseModel):
+    """Operator identity required for the ISA-18.2 acknowledge action."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    acknowledged_by: UUID

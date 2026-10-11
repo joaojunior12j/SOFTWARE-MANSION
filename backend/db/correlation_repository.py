@@ -35,6 +35,31 @@ LINK_EVENTS_SQL = text(
     """
 )
 
+INSERT_ALARM_SQL = text(
+    """
+    INSERT INTO alarms (
+        correlation_id,
+        title,
+        description,
+        priority_level,
+        state,
+        zone_partition,
+        triggered_at
+    )
+    SELECT
+        :correlation_id,
+        :title,
+        :description,
+        :priority_level,
+        'UNACKNOWLEDGED',
+        :zone_partition,
+        :triggered_at
+    WHERE NOT EXISTS (
+        SELECT 1 FROM alarms WHERE correlation_id = :correlation_id
+    )
+    """
+)
+
 
 class CorrelationRepository:
     """Persist a correlation and link every source event atomically."""
@@ -59,11 +84,17 @@ class CorrelationRepository:
             "rule_triggered": result.rule_triggered,
             "confidence_score": result.confidence_score,
             "event_ids": [str(event_id) for event_id in result.event_ids],
+            "title": result.title,
+            "description": result.description,
+            "priority_level": result.priority_level,
+            "zone_partition": result.zone_partition,
+            "triggered_at": result.triggered_at,
             "created_at": result.created_at,
         }
         async with self.engine.begin() as connection:
             await connection.execute(INSERT_CORRELATION_SQL, parameters)
             await connection.execute(LINK_EVENTS_SQL, parameters)
+            await connection.execute(INSERT_ALARM_SQL, parameters)
 
     async def close(self) -> None:
         """Dispose only an engine created by this repository."""

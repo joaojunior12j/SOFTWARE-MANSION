@@ -17,6 +17,9 @@ class CorrelationRule(Protocol):
 
     rule_id: str
     confidence_score: float
+    title: str
+    description: str
+    priority_level: str
 
     def match(
         self,
@@ -34,6 +37,11 @@ class CorrelationResult:
     confidence_score: float
     event_ids: tuple[UUID, ...]
     events: tuple[AlarmEvent, ...]
+    title: str
+    description: str
+    priority_level: str
+    zone_partition: str
+    triggered_at: datetime
     created_at: datetime
 
 
@@ -54,6 +62,9 @@ class CorrelationEngine:
                 raise ValueError(
                     "rule confidence_score must be between 0 and 1"
                 )
+            valid_priorities = {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
+            if rule.priority_level not in valid_priorities:
+                raise ValueError("rule priority_level is invalid")
         self.max_window_seconds = float(max_window_seconds)
         self.rules = tuple(rules)
         self.uuid_factory = uuid_factory
@@ -164,6 +175,11 @@ class CorrelationEngine:
                     confidence_score=rule.confidence_score,
                     event_ids=event_ids,
                     events=linked,
+                    title=rule.title,
+                    description=rule.description,
+                    priority_level=rule.priority_level,
+                    zone_partition=key[1],
+                    triggered_at=max(event.timestamp for event in linked),
                     created_at=created_at,
                 )
             )

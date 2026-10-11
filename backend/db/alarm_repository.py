@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -35,6 +37,46 @@ LIST_ACTIVE_ALARMS_SQL = text(
     """
 )
 
+LOCK_ALARM_SQL = text(
+    """
+    SELECT state
+    FROM alarms
+    WHERE alarm_id = :alarm_id
+    FOR UPDATE
+    """
+)
+
+ACKNOWLEDGE_ALARM_SQL = text(
+    """
+    UPDATE alarms
+    SET
+        state = 'ACKNOWLEDGED',
+        acknowledged_at = NOW(),
+        acknowledged_by = :acknowledged_by
+    WHERE alarm_id = :alarm_id
+    RETURNING
+        alarm_id,
+        correlation_id,
+        title,
+        description,
+        priority_level,
+        state,
+        zone_partition,
+        triggered_at,
+        acknowledged_at,
+        acknowledged_by,
+        cleared_at
+    """
+)
+
+
+class AlarmNotFoundError(LookupError):
+    """Raised when an alarm identifier does not exist."""
+
+
+class InvalidAlarmTransitionError(ValueError):
+    """Raised when an ISA-18.2 state transition is not allowed."""
+
 
 class AlarmRepository:
     """Load active alarms in operator priority order."""
@@ -59,6 +101,31 @@ class AlarmRepository:
                 AlarmRead.model_validate(dict(row))
                 for row in result.mappings().all()
             ]
+
+    async def acknowledge(
+        self,
+        alarm_id: UUID,
+        acknowledged_by: UUID,
+    ) -> AlarmRead:
+        """Atomically transition an unacknowledged alarm to acknowledged."""
+        parameters = {
+            "alarm_id": str(alarm_id),
+            "acknowledged_by": str(acknowledged_by),
+        }
+        async with self.engine.begin() as connection:
+            locked = await connection.execute(LOCK_ALARM_SQL, parameters)
+            state = locked.scalar_one_or_none()
+            if state is None:
+                raise AlarmNotFoundError(str(alarm_id))
+            if state != "UNACKNOWLEDGED":
+                raise InvalidAlarmTransitionError(
+                    f"cannot acknowledge alarm in state {state}"
+                )
+            updated = await connection.execute(
+                ACKNOWLEDGE_ALARM_SQL,
+                parameters,
+            )
+            return AlarmRead.model_validate(dict(updated.mappings().one()))
 
     async def close(self) -> None:
         """Release the SQLAlchemy connection pool."""

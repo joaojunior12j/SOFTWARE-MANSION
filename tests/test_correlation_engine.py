@@ -36,6 +36,9 @@ class FirstTwoRule:
 
     rule_id = "TEST_TWO_EVENTS"
     confidence_score = 0.9
+    title = "Test alarm"
+    description = "Two events"
+    priority_level = "HIGH"
 
     def match(self, events):
         return events[:2] if len(events) >= 2 else None
@@ -46,6 +49,9 @@ class OutsideWindowRule:
 
     rule_id = "TEST_INVALID"
     confidence_score = 0.5
+    title = "Invalid alarm"
+    description = "Outside window"
+    priority_level = "LOW"
 
     def match(self, events):
         return (make_event(99, 0),)
@@ -56,6 +62,9 @@ class InvalidConfidenceRule:
 
     rule_id = "TEST_CONFIDENCE"
     confidence_score = 1.1
+    title = "Invalid confidence"
+    description = "Invalid"
+    priority_level = "LOW"
 
     def match(self, events):
         return None

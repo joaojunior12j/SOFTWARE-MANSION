@@ -58,12 +58,17 @@ class CorrelationRepositoryTests(unittest.IsolatedAsyncioTestCase):
             confidence_score=0.95,
             event_ids=(UUID(int=1), UUID(int=2)),
             events=(make_event(1, 0), make_event(2, 1)),
+            title="Test correlation",
+            description="Two events matched",
+            priority_level="CRITICAL",
+            zone_partition="01",
+            triggered_at=datetime(2026, 10, 12, tzinfo=timezone.utc),
             created_at=datetime(2026, 10, 12, tzinfo=timezone.utc),
         )
 
         await repository.save(result)
 
-        self.assertEqual(len(engine.connection.executions), 2)
+        self.assertEqual(len(engine.connection.executions), 3)
         first_parameters = engine.connection.executions[0][1]
         second_parameters = engine.connection.executions[1][1]
         self.assertIs(first_parameters, second_parameters)
