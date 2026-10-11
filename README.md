@@ -90,6 +90,21 @@ PIR e Câmera IVA. O smoke test dedicado pode ser executado com:
 python -m tests.smoke_day6
 ```
 
+## Dia 7 - Cenário rf_jammer
+
+Execute a sequência que alimentará a regra de correlação R01:
+
+```powershell
+python simulate.py --scenario rf_jammer --account 1234
+```
+
+A CLI publica, na mesma partição e dentro de 15 segundos, os eventos de câmera
+desconectada, timeout SIA DC-09 e PIR ativo. Valide a integração MQTT com:
+
+```powershell
+python -m tests.smoke_day7
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

@@ -13,7 +13,13 @@ SourceType = Literal[
     "ALARM_PANEL",
     "SIMULATOR",
 ]
-EventStatus = Literal["ACTIVE", "RESTORED", "TAMPER"]
+EventStatus = Literal[
+    "ACTIVE",
+    "RESTORED",
+    "TAMPER",
+    "DISCONNECTED",
+    "TIMEOUT_SIA_DC09",
+]
 PriorityLevel = Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
 AlarmState = Literal[
     "UNACKNOWLEDGED",

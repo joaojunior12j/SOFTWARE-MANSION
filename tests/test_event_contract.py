@@ -46,3 +46,11 @@ class AlarmEventTests(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             AlarmEvent.model_validate(payload)
+
+    def test_accepts_statuses_required_by_jammer_rule(self) -> None:
+        for status in ("DISCONNECTED", "TIMEOUT_SIA_DC09"):
+            event = AlarmEvent.model_validate(
+                {**CANONICAL_EVENT, "event_status": status}
+            )
+
+            self.assertEqual(event.event_status, status)

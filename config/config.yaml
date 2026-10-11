@@ -59,6 +59,25 @@ simulator:
           hardware_id: "CAMERA-PERIMETRO-NORTE"
           zone_partition: "01"
           zone_number: 3
+    rf_jammer:
+      random_seed: 1
+      timings_seconds:
+        camera_offline: 0
+        sia_timeout: 5
+        pir_active: 10
+      devices:
+        camera:
+          hardware_id: "CAMERA-PERIMETRO-NORTE"
+          zone_partition: "01"
+          zone_number: 3
+        alarm_panel:
+          hardware_id: "CENTRAL-SIA-PRINCIPAL"
+          zone_partition: "01"
+          zone_number: 0
+        pir:
+          hardware_id: "PIR-PERIMETRO-NORTE"
+          zone_partition: "01"
+          zone_number: 2
 
 risk_calendar:
   high_risk_times:
