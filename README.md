@@ -193,6 +193,26 @@ validar a normalização e a entrega MQTT sem depender de hardware físico:
 python -m tests.smoke_day11
 ```
 
+## Sprint 2 - Dia 12 - Metadados ONVIF (incremento de E7-002)
+
+O adaptador `backend.integrations.onvif_metadata` recebe documentos XML completos
+de uma fonte injetável e decodifica classificações `Human` e `Vehicle`. Preserva
+o horário, identificador do objeto, origem e confiança da câmera. A classificação
+fica em um contrato separado em memória e não gera alarme de intrusão ou altera
+o payload canônico. A conexão RTSP/RTP à câmera ainda está pendente.
+
+Inspecione a fixture sintética ou um documento XML capturado localmente:
+
+```powershell
+python -m backend.integrations.onvif_metadata tests/fixtures/onvif_object_metadata.xml --account 1234 --camera-id CAMERA-TEST --partition 01 --zone 3
+python -m tests.smoke_day12
+```
+
+O limite de tamanho fica em `integrations.onvif.metadata_max_bytes`. O smoke
+verifica a decodificação da fixture e a regressão do caminho Profile T pelo
+Mosquitto real; não homologa uma câmera Profile M. Veja os critérios de aceite e
+pendências em [DoD do Dia 12](docs/SPRINT2_DAY12_DOD.md).
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

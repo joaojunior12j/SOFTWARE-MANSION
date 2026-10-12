@@ -24,6 +24,7 @@ integrations:
   onvif:
     pull_timeout_seconds: 5
     message_limit: 10
+    metadata_max_bytes: 1048576
 
 correlation_engine:
   window_seconds: 60
