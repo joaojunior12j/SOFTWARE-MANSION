@@ -21,7 +21,7 @@ from backend.integrations.onvif_listener import ONVIFCameraConfig
 
 
 NS = {"tt": "http://www.onvif.org/ver10/schema"}
-METADATA_TAG = f"{{{NS['tt']}}}MetaDataStream"
+METADATA_TAG = f"{{{NS['tt']}}}MetadataStream"
 
 
 class ObjectClass(BaseModel):
@@ -59,8 +59,12 @@ class CameraObjectMetadata(BaseModel):
 def _classes(element: etree._Element) -> tuple[ObjectClass, ...]:
     candidates = []
     for candidate in element.findall("tt:ClassCandidate", NS):
+        label = candidate.findtext("tt:Type", namespaces=NS)
+        # The deprecated ClassType enum spells Vehicle as "Vehical".
+        if label == "Vehical":
+            label = "Vehicle"
         candidates.append((
-            candidate.findtext("tt:Type", namespaces=NS),
+            label,
             candidate.findtext("tt:Likelihood", namespaces=NS),
         ))
     for candidate in element.findall("tt:Type", NS):
@@ -80,7 +84,7 @@ def parse_object_metadata(
     camera: ONVIFCameraConfig,
     max_document_bytes: int = 1_048_576,
 ) -> list[CameraObjectMetadata]:
-    """Parse complete tt:MetaDataStream XML with legacy or modern classes.
+    """Parse complete tt:MetadataStream XML with legacy or modern classes.
 
     Unsupported classes are ignored. Invalid supported observations reject
     the document before callbacks. DTDs/entities are refused. Images, face
@@ -101,7 +105,7 @@ def parse_object_metadata(
     if root.getroottree().docinfo.doctype:
         raise ValueError("ONVIF metadata DTDs are not supported")
     if root.tag != METADATA_TAG:
-        raise ValueError("expected ONVIF tt:MetaDataStream")
+        raise ValueError("expected ONVIF tt:MetadataStream")
 
     observations = []
     for frame in root.findall("tt:VideoAnalytics/tt:Frame", NS):

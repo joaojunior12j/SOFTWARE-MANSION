@@ -199,7 +199,7 @@ O adaptador `backend.integrations.onvif_metadata` recebe documentos XML completo
 de uma fonte injetável e decodifica classificações `Human` e `Vehicle`. Preserva
 o horário, identificador do objeto, origem e confiança da câmera. A classificação
 fica em um contrato separado em memória e não gera alarme de intrusão ou altera
-o payload canônico. A conexão RTSP/RTP à câmera ainda está pendente.
+o payload canônico. O transporte RTSP/RTP foi implementado no Dia 13.
 
 Inspecione a fixture sintética ou um documento XML capturado localmente:
 
@@ -212,6 +212,28 @@ O limite de tamanho fica em `integrations.onvif.metadata_max_bytes`. O smoke
 verifica a decodificação da fixture e a regressão do caminho Profile T pelo
 Mosquitto real; não homologa uma câmera Profile M. Veja os critérios de aceite e
 pendências em [DoD do Dia 12](docs/SPRINT2_DAY12_DOD.md).
+
+## Sprint 2 - Dia 13 - Transporte ONVIF RTSP/RTP
+
+O processo consulta os perfis ONVIF Media1 com analytics metadata habilitado e
+recebe a trilha XML `vnd.onvif.metadata` por RTP intercalado em TCP. Inclui Digest
+MD5/SHA-256, timeout, keepalive, reconexão e liberação da sessão. Classificações
+continuam separadas dos eventos de alarme e são impressas como observações JSON.
+
+Defina `ONVIF_CAMERA_HOST`, `ONVIF_CAMERA_PORT`, `ONVIF_CAMERA_USERNAME` e
+`ONVIF_CAMERA_PASSWORD` no `.env` local. Execute:
+
+```powershell
+python -m backend.integrations.onvif_stream --account 1234 --camera-id CAMERA-LOCAL --partition 01 --zone 3
+python -m tests.smoke_day13
+```
+
+Use `--profile-token` para selecionar um perfil específico. Os parâmetros de
+transporte ficam em `integrations.onvif` na configuração central. O smoke usa um
+servidor RTSP sintético por socket de loopback e Mosquitto real; a homologação
+com câmera física permanece pendente. Suporte: Media1, RTSP 1.0, TCP intercalado,
+XML sem compressão. Consulte os demais limites no
+[DoD do Dia 13](docs/SPRINT2_DAY13_DOD.md).
 
 ## Pre-requisitos
 

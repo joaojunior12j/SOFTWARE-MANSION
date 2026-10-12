@@ -48,6 +48,7 @@ def run() -> None:
     hardware_id = "CAMERA-SMOKE-ONVIF"
     topic = f"mansao/{account_id}/eventos/cameras/{hardware_id}/analytics"
     received = Event()
+    subscribed = Event()
     captured = {}
     subscriber = mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
@@ -62,10 +63,16 @@ def run() -> None:
     def on_message(client, userdata, message):
         captured["topic"] = message.topic
         captured["payload"] = message.payload.decode("utf-8")
+        captured["qos"] = message.qos
         received.set()
+
+    def on_subscribe(client, userdata, mid, reason_codes, properties):
+        if all(not code.is_failure for code in reason_codes):
+            subscribed.set()
 
     subscriber.on_connect = on_connect
     subscriber.on_message = on_message
+    subscriber.on_subscribe = on_subscribe
     subscriber.connect(
         mqtt_settings["host"],
         mqtt_settings["port"],
@@ -79,6 +86,8 @@ def run() -> None:
     )
 
     try:
+        if not subscribed.wait(5):
+            raise RuntimeError("MQTT subscription was not acknowledged")
         publisher.connect()
         listener = ONVIFLineCrossingListener(
             FixturePullPoint(),
@@ -97,6 +106,8 @@ def run() -> None:
             raise RuntimeError("ONVIF adapter changed the fixed payload")
         if event.source_type != "CAMERA" or event.sia_code != "BA":
             raise RuntimeError("ONVIF event was normalized incorrectly")
+        if captured["qos"] != 1:
+            raise RuntimeError("ONVIF event did not arrive with MQTT QoS 1")
     finally:
         publisher.close()
         subscriber.disconnect()

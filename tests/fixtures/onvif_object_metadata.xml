@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Synthetic example using ONVIF Analytics 5.1.3.5 structure; no camera capture. -->
-<tt:MetaDataStream xmlns:tt="http://www.onvif.org/ver10/schema">
+<tt:MetadataStream xmlns:tt="http://www.onvif.org/ver10/schema">
   <tt:VideoAnalytics>
     <tt:Frame UtcTime="2026-10-12T15:00:00Z" Source="analytics-test">
       <tt:Object ObjectId="21">
@@ -19,10 +19,10 @@
       <tt:Object ObjectId="23">
         <tt:Appearance><tt:Class>
           <tt:ClassCandidate>
-            <tt:Type>Vehicle</tt:Type><tt:Likelihood>0.9</tt:Likelihood>
+            <tt:Type>Vehical</tt:Type><tt:Likelihood>0.9</tt:Likelihood>
           </tt:ClassCandidate>
         </tt:Class></tt:Appearance>
       </tt:Object>
     </tt:Frame>
   </tt:VideoAnalytics>
-</tt:MetaDataStream>
+</tt:MetadataStream>

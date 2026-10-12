@@ -19,11 +19,11 @@ def document(classes='<tt:Type Likelihood="0.95">Human</tt:Type>',
              timestamp="2026-10-12T15:00:00Z", object_id="21"):
     """Make one synthetic observation, varying invalid input boundaries."""
     return (
-        '<tt:MetaDataStream xmlns:tt="http://www.onvif.org/ver10/schema">'
+        '<tt:MetadataStream xmlns:tt="http://www.onvif.org/ver10/schema">'
         '<tt:VideoAnalytics>'
         f'<tt:Frame UtcTime="{timestamp}"><tt:Object ObjectId="{object_id}">'
         f'<tt:Appearance><tt:Class>{classes}</tt:Class></tt:Appearance>'
-        '</tt:Object></tt:Frame></tt:VideoAnalytics></tt:MetaDataStream>'
+        '</tt:Object></tt:Frame></tt:VideoAnalytics></tt:MetadataStream>'
     )
 
 
@@ -105,14 +105,14 @@ class MetadataParserTests(unittest.TestCase):
         for xml in (
             '<broken', '<MetaDataStream/>',
             document().replace(NS_URI, 'urn:vendor'),
-            '<!DOCTYPE tt:MetaDataStream [<!ENTITY x "Human">]>'
+            '<!DOCTYPE tt:MetadataStream [<!ENTITY x "Human">]>'
             + document('<tt:Type>&x;</tt:Type>'),
         ):
             with self.subTest(xml=xml), self.assertRaises(ValueError):
                 parse_object_metadata(xml, CAMERA)
 
     def test_refuses_utf16_dtd_and_oversized_document(self):
-        xml = '<!DOCTYPE tt:MetaDataStream>' + document()
+        xml = '<!DOCTYPE tt:MetadataStream>' + document()
         with self.assertRaisesRegex(ValueError, "DTD"):
             parse_object_metadata(xml.encode('utf-16'), CAMERA)
         with self.assertRaisesRegex(ValueError, "size limit"):

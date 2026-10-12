@@ -1,5 +1,9 @@
 # Sprint 2 - Dia 12 - Definition of Done
 
+Registro do incremento do Dia 12. O transporte listado como pendente abaixo
+foi implementado no [Dia 13](SPRINT2_DAY13_DOD.md), dentro do escopo documentado;
+a homologação física permanece pendente.
+
 ## Escopo do incremento
 
 E7-002 no documento mestre solicita receber metadados de classificação de
@@ -9,7 +13,8 @@ a conexão ao stream de uma câmera e a homologação física ainda estão pende
 
 Critérios de aceite deste incremento:
 
-- [x] Interpretar `tt:MetaDataStream/tt:VideoAnalytics/tt:Frame/tt:Object`.
+- [x] Interpretar `tt:MetadataStream/tt:VideoAnalytics/tt:Frame/tt:Object`
+  (grafia corrigida no Dia 13 conforme o XSD normativo).
 - [x] Ler `Human` e `Vehicle` em `Class/Type` e no legado `ClassCandidate`.
 - [x] Preservar timestamp com timezone, ObjectId, Source e contexto da câmera.
 - [x] Preservar candidatos e confiança, sem escolher uma classificação vencedora.
