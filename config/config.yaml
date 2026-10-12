@@ -20,6 +20,11 @@ api:
   cors_origins:
     - "http://localhost:5173"
 
+integrations:
+  onvif:
+    pull_timeout_seconds: 5
+    message_limit: 10
+
 correlation_engine:
   window_seconds: 60
   jammer_window_seconds: 15

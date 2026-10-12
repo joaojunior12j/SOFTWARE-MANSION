@@ -167,6 +167,32 @@ npm run build
 npm audit
 ```
 
+## Sprint 2 - Dia 11 - ONVIF Profile T
+
+O listener ONVIF usa PullPoint para receber o tópico padronizado
+`RuleEngine/LineDetector/Crossed` e o traduz para o payload JSON canônico antes
+da publicação MQTT. IP, usuário e senha da câmera não são versionados.
+
+Defina `ONVIF_CAMERA_PASSWORD` somente no `.env` local e execute:
+
+```powershell
+python -m backend.integrations.onvif_listener `
+  --host ENDERECO_LOCAL_DA_CAMERA `
+  --username USUARIO_LOCAL `
+  --account 1234 `
+  --camera-id CAMERA-MURO-NORTE `
+  --partition 01 `
+  --zone 3
+```
+
+O listener aceita também `--port` e `--password-env`. A câmera deve estar na
+rede local protegida e possuir eventos analíticos ONVIF habilitados. Para
+validar a normalização e a entrega MQTT sem depender de hardware físico:
+
+```powershell
+python -m tests.smoke_day11
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

@@ -1,0 +1,11 @@
+<tt:Message xmlns:tt="http://www.onvif.org/ver10/schema"
+            UtcTime="2026-10-12T15:00:00Z">
+  <tt:Source>
+    <tt:SimpleItem Name="VideoSource" Value="1" />
+    <tt:SimpleItem Name="AnalyticsConfiguration" Value="2" />
+    <tt:SimpleItem Name="Rule" Value="MuroNorte" />
+  </tt:Source>
+  <tt:Data>
+    <tt:SimpleItem Name="ObjectId" Value="15" />
+  </tt:Data>
+</tt:Message>
