@@ -108,6 +108,19 @@ class MQTTEventBridgeTests(unittest.TestCase):
 
         self.assertIsNotNone(future.callback)
 
+    def test_disconnect_clears_online_state(self) -> None:
+        self.bridge.connected.set()
+
+        self.bridge._on_disconnect(
+            self.client,
+            None,
+            None,
+            FakeReasonCode(),
+            None,
+        )
+
+        self.assertFalse(self.bridge.connected.is_set())
+
     def test_invalid_message_is_discarded(self) -> None:
         with self.assertLogs("backend.api.event_stream", level="ERROR"):
             self.bridge._on_message(

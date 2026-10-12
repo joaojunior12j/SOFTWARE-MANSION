@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 SourceType = Literal[
@@ -72,6 +72,8 @@ class AlarmRead(BaseModel):
     acknowledged_at: datetime | None = None
     acknowledged_by: UUID | None = None
     cleared_at: datetime | None = None
+    rule_triggered: str | None = None
+    sia_codes: list[str] = Field(default_factory=list)
 
 
 class AlarmAcknowledgeRequest(BaseModel):
@@ -80,3 +82,9 @@ class AlarmAcknowledgeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     acknowledged_by: UUID
+
+
+class SystemStatus(BaseModel):
+    """Live connectivity state displayed by the supervisory HMI."""
+
+    mqtt_online: bool

@@ -95,6 +95,10 @@ class AlarmRepositoryTests(unittest.IsolatedAsyncioTestCase):
         sql = str(engine.connection.statement)
         self.assertIn("state <> 'CLEARED'", sql)
         self.assertIn("WHEN 'CRITICAL' THEN 1", sql)
+        self.assertIn("rule_triggered", sql)
+        self.assertIn("sia_codes", sql)
+        self.assertIn("alarms.correlation_id", sql)
+        self.assertIn("WHERE alarms.state", sql)
 
     async def test_close_disposes_engine(self) -> None:
         engine = FakeEngine()

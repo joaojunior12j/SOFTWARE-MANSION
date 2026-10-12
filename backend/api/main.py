@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.event_stream import EventStream, MQTTEventBridge
 from backend.api.routes.alarmes import router as alarm_router
 from backend.api.routes.eventos import router as event_router
+from backend.api.routes.status import router as status_router
 from backend.core.settings import load_settings
 from backend.core.topics import event_subscription_topic
 from backend.db.alarm_repository import AlarmRepository
@@ -50,6 +51,7 @@ def create_app(
                 loop=asyncio.get_running_loop(),
             )
             await bridge.start()
+        application.state.mqtt_bridge = bridge
         try:
             yield
         finally:
@@ -65,6 +67,7 @@ def create_app(
     )
     application.state.event_stream = stream
     application.state.alarm_repository = alarm_repository
+    application.state.mqtt_bridge = None
     application.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings["api"]["cors_origins"],
@@ -74,6 +77,7 @@ def create_app(
     )
     application.include_router(alarm_router)
     application.include_router(event_router)
+    application.include_router(status_router)
     return application
 
 

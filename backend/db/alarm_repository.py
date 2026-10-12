@@ -13,27 +13,39 @@ from backend.api.schemas import AlarmRead
 LIST_ACTIVE_ALARMS_SQL = text(
     """
     SELECT
-        alarm_id,
-        correlation_id,
-        title,
-        description,
-        priority_level,
-        state,
-        zone_partition,
-        triggered_at,
-        acknowledged_at,
-        acknowledged_by,
-        cleared_at
+        alarms.alarm_id,
+        alarms.correlation_id,
+        alarms.title,
+        alarms.description,
+        alarms.priority_level,
+        alarms.state,
+        alarms.zone_partition,
+        alarms.triggered_at,
+        alarms.acknowledged_at,
+        alarms.acknowledged_by,
+        alarms.cleared_at,
+        correlations.rule_triggered,
+        COALESCE(
+            ARRAY(
+                SELECT DISTINCT event.sia_code
+                FROM events AS event
+                WHERE event.correlation_id = alarms.correlation_id
+                ORDER BY event.sia_code
+            ),
+            ARRAY[]::VARCHAR[]
+        ) AS sia_codes
     FROM alarms
-    WHERE state <> 'CLEARED'
+    LEFT JOIN correlations
+        ON correlations.correlation_id = alarms.correlation_id
+    WHERE alarms.state <> 'CLEARED'
     ORDER BY
-        CASE priority_level
+        CASE alarms.priority_level
             WHEN 'CRITICAL' THEN 1
             WHEN 'HIGH' THEN 2
             WHEN 'MEDIUM' THEN 3
             WHEN 'LOW' THEN 4
         END,
-        triggered_at DESC
+        alarms.triggered_at DESC
     """
 )
 
@@ -65,7 +77,21 @@ ACKNOWLEDGE_ALARM_SQL = text(
         triggered_at,
         acknowledged_at,
         acknowledged_by,
-        cleared_at
+        cleared_at,
+        (
+            SELECT rule_triggered
+            FROM correlations
+            WHERE correlation_id = alarms.correlation_id
+        ) AS rule_triggered,
+        COALESCE(
+            ARRAY(
+                SELECT DISTINCT event.sia_code
+                FROM events AS event
+                WHERE event.correlation_id = alarms.correlation_id
+                ORDER BY event.sia_code
+            ),
+            ARRAY[]::VARCHAR[]
+        ) AS sia_codes
     """
 )
 

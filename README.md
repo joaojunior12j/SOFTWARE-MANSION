@@ -136,6 +136,37 @@ Valide regras, banco e reconhecimento com:
 python -m tests.smoke_day9
 ```
 
+## Dia 10 - HMI operacional
+
+A interface React 18 + Vite apresenta os alarmes ativos em tempo real, com
+contadores e cores por prioridade, estado MQTT, códigos SIA, zona e horário.
+Alarmes críticos não reconhecidos possuem indicação pulsante. O reconhecimento
+exige confirmação e um UUID de operador válido.
+
+Com a API e o consumidor em execução, inicie a HMI:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Acesse `http://localhost:5173`. Para validar a projeção real do alarme e a
+persistência do reconhecimento no PostgreSQL, execute na raiz do projeto:
+
+```powershell
+python -m tests.smoke_day10
+```
+
+Validações isoladas do frontend:
+
+```powershell
+cd frontend
+npm test
+npm run build
+npm audit
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

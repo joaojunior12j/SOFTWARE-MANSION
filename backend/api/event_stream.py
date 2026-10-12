@@ -84,6 +84,7 @@ class MQTTEventBridge:
             client_id="psim-api-event-stream",
         )
         self.client.on_connect = self._on_connect
+        self.client.on_disconnect = self._on_disconnect
         self.client.on_message = self._on_message
 
     def _on_connect(
@@ -99,6 +100,16 @@ class MQTTEventBridge:
             return
         client.subscribe(self.topic, qos=1)
         self.loop.call_soon_threadsafe(self.connected.set)
+
+    def _on_disconnect(
+        self,
+        client: mqtt.Client,
+        userdata: Any,
+        disconnect_flags: mqtt.DisconnectFlags,
+        reason_code: mqtt.ReasonCode,
+        properties: mqtt.Properties | None,
+    ) -> None:
+        self.loop.call_soon_threadsafe(self.connected.clear)
 
     def _on_message(
         self,

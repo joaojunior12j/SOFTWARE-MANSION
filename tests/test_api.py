@@ -71,6 +71,7 @@ class APITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()[0]["priority_level"], "CRITICAL")
         self.assertEqual(response.json()[0]["state"], "UNACKNOWLEDGED")
+        self.assertEqual(response.json()[0]["sia_codes"], [])
 
     def test_websocket_streams_canonical_event(self) -> None:
         with TestClient(self.app) as client:
@@ -127,3 +128,10 @@ class APITests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 409)
+
+    def test_status_reports_mqtt_offline_without_bridge(self) -> None:
+        with TestClient(self.app) as client:
+            response = client.get("/api/status")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"mqtt_online": False})
