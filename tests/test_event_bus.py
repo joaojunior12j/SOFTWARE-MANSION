@@ -1,6 +1,7 @@
 """Tests for the MQTT event publisher wrapper."""
 
 import unittest
+from unittest.mock import Mock
 
 import paho.mqtt.client as mqtt
 
@@ -119,3 +120,17 @@ class EventPublisherTests(unittest.TestCase):
         )
 
         self.assertFalse(self.publisher.connected.is_set())
+
+    def test_bounded_puback_wait(self) -> None:
+        self.publisher.connected.set()
+        result = Mock(rc=0)
+        self.client.publish_result = result
+        result.is_published.return_value = False
+        with self.assertRaises(TimeoutError):
+            self.publisher.publish(self.event, timeout=1)
+        result.wait_for_publish.assert_called_once_with(timeout=1)
+        result.is_published.return_value = True
+        self.assertEqual(self.publisher.publish(self.event, timeout=1),
+                         'mansao/1234/eventos/centrais')
+        with self.assertRaises(ValueError):
+            self.publisher.publish(self.event, timeout=0)

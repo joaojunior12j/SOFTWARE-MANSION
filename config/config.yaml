@@ -21,6 +21,21 @@ api:
     - "http://localhost:5173"
 
 integrations:
+  sia_dc09:
+    host: "127.0.0.1"
+    port: 5500
+    account_env: "SIA_ACCOUNT_ID"
+    device_env: "SIA_DEVICE_ID"
+    key_env: "SIA_AES_KEY"
+    default_partition: "01"
+    allow_plaintext: false
+    max_frame_bytes: 4095
+    read_timeout_seconds: 10
+    publish_timeout_seconds: 5
+    max_clock_skew_seconds: 20
+    dedup_seconds: 120
+    dedup_capacity: 1024
+    max_connections: 16
   onvif:
     pull_timeout_seconds: 5
     message_limit: 10

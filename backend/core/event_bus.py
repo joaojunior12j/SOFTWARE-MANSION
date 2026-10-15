@@ -65,10 +65,12 @@ class EventPublisher:
             self.client.loop_stop()
             raise TimeoutError("MQTT connection timed out")
 
-    def publish(self, event: AlarmEvent) -> str:
+    def publish(self, event: AlarmEvent, timeout: float | None = None) -> str:
         """Publish one fixed event payload and return its resolved topic."""
         if not self.connected.is_set():
             raise RuntimeError("publisher is not connected")
+        if timeout is not None and timeout <= 0:
+            raise ValueError("publish timeout must be positive")
         topic = topic_for_event(event)
         result = self.client.publish(
             topic,
@@ -76,7 +78,12 @@ class EventPublisher:
             qos=1,
             retain=False,
         )
-        result.wait_for_publish()
+        if timeout is None:
+            result.wait_for_publish()
+        else:
+            result.wait_for_publish(timeout=timeout)
+            if not result.is_published():
+                raise TimeoutError("MQTT publish acknowledgement timed out")
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             raise RuntimeError(f"MQTT publish failed with code {result.rc}")
         return topic

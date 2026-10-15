@@ -235,6 +235,27 @@ com câmera física permanece pendente. Suporte: Media1, RTSP 1.0, TCP intercala
 XML sem compressão. Consulte os demais limites no
 [DoD do Dia 13](docs/SPRINT2_DAY13_DOD.md).
 
+## Sprint 2 - Dia 14 - Receptor SIA-DCS TCP
+
+O receptor valida enquadramento, tamanho, CRC, conta e timestamp antes de
+normalizar BA/BR/TA/TR/RP para o JSON canônico. Suporta AES-CBC-128/256 e envia
+ACK criptografado após confirmação MQTT QoS 1. NULL é um controle sem evento.
+
+Defina `SIA_ACCOUNT_ID`, `SIA_DEVICE_ID` e `SIA_AES_KEY` no `.env` local.
+A chave deve ter 32 ou 64 dígitos hexadecimais; nunca a versione. Execute:
+
+```powershell
+python -m backend.integrations.sia_dc09_listener
+python -m tests.smoke_day14
+```
+
+O bind padrão é loopback:5500, configurável em `integrations.sia_dc09`.
+Texto aberto fica desabilitado por padrão. A CLI configura uma conta por
+processo. O smoke usa contas e chaves sintéticas, TCP local e Mosquitto real.
+Homologação com central física, ADM-CID e supervisão de RP ainda estão pendentes.
+Consulte o [DoD do Dia 14](docs/SPRINT2_DAY14_DOD.md) e o
+[plano de continuidade](docs/SPRINT2_PLAN.md) para escopo e limites.
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;
