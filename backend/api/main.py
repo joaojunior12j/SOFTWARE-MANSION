@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import FastAPI
@@ -14,6 +15,8 @@ from backend.api.event_stream import EventStream, MQTTEventBridge
 from backend.api.routes.alarmes import router as alarm_router
 from backend.api.routes.eventos import router as event_router
 from backend.api.routes.status import router as status_router
+from backend.api.routes.risco import router as risk_router
+from backend.core.risk_calendar import RiskCalendar
 from backend.core.settings import load_settings
 from backend.core.topics import event_subscription_topic
 from backend.db.alarm_repository import AlarmRepository
@@ -24,6 +27,7 @@ def create_app(
     alarm_repository: Any | None = None,
     event_stream: EventStream | None = None,
     start_services: bool = True,
+    risk_clock: Callable[[], datetime] | None = None,
 ) -> FastAPI:
     """Create an app with injectable dependencies for tests and local use."""
     resolved_settings = dict(settings or load_settings())
@@ -68,6 +72,12 @@ def create_app(
     application.state.event_stream = stream
     application.state.alarm_repository = alarm_repository
     application.state.mqtt_bridge = None
+    application.state.risk_calendar = RiskCalendar.from_settings(
+        resolved_settings,
+    )
+    application.state.risk_clock = risk_clock or (
+        lambda: datetime.now(timezone.utc)
+    )
     application.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings["api"]["cors_origins"],
@@ -78,6 +88,7 @@ def create_app(
     application.include_router(alarm_router)
     application.include_router(event_router)
     application.include_router(status_router)
+    application.include_router(risk_router)
     return application
 
 

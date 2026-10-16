@@ -33,8 +33,11 @@ Resultado do Dia 16: recorte ADM-CID implementado e validado conforme seu DoD;
 Resultado do Dia 17: E6-007 implementado como mapa esquemático com cadastro local,
 projeção por dispositivo e smoke MQTT/WebSocket/HMI. Quatorze testes frontend e
 build aprovados; evidências no DoD do Dia 17.
-Próximo incremento: E4-008 (calendário de risco), com política de sensibilidade
-a definir antes de implementar. Não há previsão em dias corridos sem capacidade.
+Resultado do Dia 18: E4-008 implementado no PIR simulado e indicador API/HMI;
+213 testes Python e 17 frontend, cobertura total backend 94% e módulos novos
+de calendário/API 100%; build e smoke com relógio controlado aprovados.
+Próximo incremento: integração e fechamento da Sprint 2, incluindo plano integral
+da Sprint 3. Não há previsão em dias corridos sem dados de capacidade.
 
 | Ordem | Tarefa | Dependências | Aceite e validação |
 |---|---|---|---|
@@ -43,7 +46,7 @@ a definir antes de implementar. Não há previsão em dias corridos sem capacida
 | 3, Dia 15 | E7-005, supervisão de comunicação | Receptor do Dia 14 aceito | Política registrada abaixo; ausência de RP gera timeout uma vez; retorno restaura supervisão; relógio controlado e smoke TCP/MQTT/CEP |
 | 4, Dia 16 | E7-004, Contact ID | Receptor DC-09 dos Dias 14–15 | Subconjunto ADM-CID/TCP definido abaixo; testes de tradução/rejeição/retry, AES e smoke TCP → MQTT → banco. Compatibilidade física pendente |
 | 5, Dia 17 executado | E6-007, mapa 2D | HMI, cadastro local de zonas | Zonas configuráveis, estados com texto/ícone/cor, integração com eventos; testes frontend, build e inspeção visual desktop/mobile aprovados conforme DoD |
-| 6 | E4-008, calendário de risco | Política de sensibilidade explícita, CEP e configuração | Datas/horas/fuso e limites definidos antes de editar; testes de borda e regressão das regras R01/R02 |
+| 6, Dia 18 executado | E4-008, calendário de risco | Política registrada abaixo, simulador e configuração | Calendário local, ajuste PIR simulado e API/HMI; testes de borda, regressão R01/R02 e smoke aprovados conforme DoD |
 | 7 | Integração e fechamento | Incrementos anteriores aceitos | Smoke dos caminhos suportados, suíte/lint/build, pendências e backlog revisados; planejar toda a Sprint 3 antes de iniciá-la |
 
 O Dia 14 abrange o subconjunto SIA-DCS e controles NULL. ADM-CID, UDP,
@@ -52,6 +55,32 @@ incremento histórico. Seu DoD registra códigos e sintaxe; ADM-CID foi acrescen
 separadamente no Dia 16, com os limites abaixo.
 
 ## Políticas dos incrementos
+
+### Política do Dia 18, registrada antes da implementação
+
+- E4-008: avaliar calendário em `America/Sao_Paulo` usando instantes com fuso.
+  `weekday` segue Python (segunda 0, domingo 6). Cada entrada `weekday/hour`
+  cobre a hora civil inteira, início inclusivo e fim exclusivo. Datas ISO
+  configuradas cobrem o dia local inteiro; sobreposição não acumula multiplicador.
+  Datas do YAML são parâmetros locais, sem alegar calendário oficial de feriados.
+- Validar fuso IANA, datas, horas, dias e multiplicador ao carregar. Configuração
+  inválida deve falhar explicitamente; bloco ausente mantém comportamento legado.
+  `enabled: false` permite desativar. Sem consulta externa ou dependência de rede.
+- Elevar sensibilidade somente do PIR simulado: multiplicar `alpha` da equação
+  existente por 1.5 (configurável entre 1 e 3) em risco elevado, recalculado em
+  cada detecção; fora da janela usar alpha base. Preservar `p_base`, aleatoriedade,
+  limite da probabilidade e zero contraste térmico. Sem acumular ajustes.
+- Cenários usam o instante simulado da detecção (início + offset original),
+  independente da aceleração SimPy. Chamadas diretas usam UTC atual ou relógio
+  injetado. Testar entrada/saída inclusive entre duas detecções da mesma instância.
+- Preservar R01/R02, janelas, número de sensores, prioridade CRITICAL e payload
+  canônico. Não reduzir evidência de intrusão nem controlar hardware físico.
+- API de consulta `/api/risco` e indicador na HMI com modo, motivo e fuso;
+  atualização periódica e falha visível, sem mostrar modo normal a partir de cache
+  vencido. Expor explicitamente que o ajuste cobre o simulador.
+- Aceite: fronteiras de hora/dia/ano, conversão UTC e horário de verão via IANA,
+  desativação, validação, probabilidade e cenários; regressão R01/R02; cobertura
+  nova ≥80%, lint/build e smoke API/HMI com relógio controlado. Sem homologação.
 
 ### Política do Dia 17, registrada antes da implementação
 

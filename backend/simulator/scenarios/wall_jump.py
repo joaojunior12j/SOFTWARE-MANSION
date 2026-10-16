@@ -106,7 +106,7 @@ def build_wall_jump(
         yield environment.timeout(
             context.delay(timings["pir"] - timings["beam"])
         )
-        if not pir.detect():
+        if not pir.detect(at=started_at + timedelta(seconds=timings['pir'])):
             raise RuntimeError("wall_jump PIR did not detect the intruder")
         pir_event = create_event(
             context,

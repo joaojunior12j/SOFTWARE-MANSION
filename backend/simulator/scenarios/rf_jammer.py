@@ -111,7 +111,8 @@ def build_rf_jammer(
         yield environment.timeout(
             context.delay(ordered_offsets[2] - ordered_offsets[1])
         )
-        if not pir.detect():
+        detection_time = started_at + timedelta(seconds=ordered_offsets[2])
+        if not pir.detect(at=detection_time):
             raise RuntimeError("rf_jammer PIR did not detect the intruder")
         pir_event = create_event(
             context,

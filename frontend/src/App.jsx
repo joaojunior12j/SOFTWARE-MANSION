@@ -5,6 +5,7 @@ import AlarmList from "./components/AlarmList.jsx";
 import PriorityCounters from "./components/PriorityCounters.jsx";
 import StatusBar from "./components/StatusBar.jsx";
 import ZoneMap from "./components/ZoneMap.jsx";
+import RiskStatus from "./components/RiskStatus.jsx";
 import { useAlarmFeed } from "./hooks/useAlarmFeed.js";
 import { useZoneMap } from "./hooks/useZoneMap.js";
 import { isUuid } from "./lib/alarm.js";
@@ -92,6 +93,7 @@ export default function App() {
         </section>
 
         <PriorityCounters alarms={feed.alarms} />
+        <RiskStatus />
         {(feed.error || actionError) && (
           <div className="error-banner" role="alert">
             {actionError || feed.error}

@@ -9,6 +9,7 @@ simpy>=4.1.1
 onvif-zeep>=0.2.12
 lxml>=4.9.0             # XML parser already used by onvif-zeep/zeep
 pyyaml>=6.0
+tzdata>=2025.2          # IANA zones for Windows and minimal containers
 python-jose[cryptography]
 cryptography>=46.0.0
 passlib[bcrypt]

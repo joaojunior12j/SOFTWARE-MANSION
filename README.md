@@ -354,6 +354,44 @@ Com API e Mosquitto locais ativos, o cenário existente alimenta o mapa:
 python -m backend.simulator.cli --scenario wall_jump --account 1234
 ```
 
+## Sprint 2 - Dia 18 - Calendário de risco
+
+O calendário em `config/config.yaml` eleva automaticamente a sensibilidade do
+PIR **simulado** nas horas/datas cadastradas. A HMI mostra o modo e o fuso via
+`GET /api/risco`. Não altera sensores físicos, analytics de câmeras ou regras
+R01/R02. O contrato dos eventos permanece intacto.
+
+```yaml
+risk_calendar:
+  enabled: true
+  timezone: "America/Sao_Paulo"
+  pir_alpha_multiplier: 1.5
+  high_risk_times:
+    - weekday: 6  # Segunda = 0; domingo = 6
+      hour: 23    # 23:00 inclusive até 00:00 exclusive
+  high_risk_holidays:
+    - "2027-04-21"  # Data local cadastrada, dia inteiro
+```
+
+Entradas sobrepostas não acumulam ajustes. Fora das janelas, o PIR usa o alpha
+base; no risco elevado, usa alpha × multiplicador (limite 1–3). O `p_base` e o
+zero de probabilidade sem contraste térmico permanecem. O valor 1.5 é inicial de
+bancada, sem calibração com hardware. Os cenários usam a hora da detecção simulada,
+independente da velocidade de execução.
+
+As datas são uma agenda local, sem importação automática de feriados oficiais.
+Reinicie API e simulador após editar. Bloco ausente mantém comportamento legado;
+`enabled: false` desativa o ajuste. Fuso/datas/horas inválidos falham explicitamente.
+No Windows, a dependência `tzdata` fornece a base IANA.
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn backend.api.main:app --host 127.0.0.1 --port 8000
+```
+
+A HMI consulta o modo a cada 30s, com timeout de 5s. Consulta com falha ou sem
+confirmação recente aparece indisponível. [Política, testes e limites do Dia 18](docs/SPRINT2_DAY18_DOD.md).
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;

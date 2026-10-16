@@ -113,6 +113,9 @@ simulator:
           zone_number: 2
 
 risk_calendar:
+  enabled: true
+  timezone: "America/Sao_Paulo"
+  pir_alpha_multiplier: 1.5
   high_risk_times:
     - weekday: 6
       hour: 23

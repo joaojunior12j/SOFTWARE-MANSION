@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import math
 from random import Random
-from typing import Any, Generator
+from typing import Any, Callable, Generator
 
 import simpy
+
+from backend.core.risk_calendar import RiskCalendar
 
 
 @dataclass
@@ -19,6 +22,10 @@ class PIRSensor:
     body_temperature: float = 36.5
     ambient_temperature: float = 25.0
     rng: Random = field(default_factory=Random, repr=False, compare=False)
+    risk_calendar: RiskCalendar | None = field(default=None, repr=False)
+    now_factory: Callable[[], datetime] = field(
+        default=lambda: datetime.now(timezone.utc), repr=False, compare=False,
+    )
 
     def __post_init__(self) -> None:
         """Reject parameters outside the mathematical model domain."""
@@ -39,6 +46,7 @@ class PIRSensor:
         cls,
         settings: dict[str, Any],
         rng: Random | None = None,
+        now_factory: Callable[[], datetime] | None = None,
     ) -> "PIRSensor":
         """Create the model from the central ``sensors.pir`` settings."""
         config = settings["sensors"]["pir"]
@@ -48,13 +56,16 @@ class PIRSensor:
             body_temperature=float(config["body_temperature"]),
             ambient_temperature=float(config["t_ambient_default"]),
             rng=rng or Random(),
+            risk_calendar=RiskCalendar.from_settings(settings),
+            now_factory=now_factory or (lambda: datetime.now(timezone.utc)),
         )
 
     def detection_probability(
         self,
         ambient_temperature: float | None = None,
+        *, at: datetime | None = None,
     ) -> float:
-        """Return ``Pd = P_base * (1 - exp(-alpha * |Tcorp-Tamb|))``."""
+        """Apply the current risk factor to alpha, keeping the base model."""
         temperature = (
             self.ambient_temperature
             if ambient_temperature is None
@@ -62,11 +73,17 @@ class PIRSensor:
         )
         self._validate_temperature(temperature)
         delta = abs(self.body_temperature - temperature)
-        return self.p_base * (1.0 - math.exp(-self.alpha * delta))
+        multiplier = 1.0
+        if self.risk_calendar is not None:
+            instant = at if at is not None else self.now_factory()
+            risk = self.risk_calendar.evaluate(instant)
+            multiplier = risk.pir_alpha_multiplier
+        return self.p_base * (1.0 - math.exp(-self.alpha * delta * multiplier))
 
-    def detect(self, ambient_temperature: float | None = None) -> bool:
+    def detect(self, ambient_temperature: float | None = None,
+               *, at: datetime | None = None) -> bool:
         """Sample whether the PIR detects a target at the given temperature."""
-        probability = self.detection_probability(ambient_temperature)
+        probability = self.detection_probability(ambient_temperature, at=at)
         return self.rng.random() < probability
 
     def sense(
