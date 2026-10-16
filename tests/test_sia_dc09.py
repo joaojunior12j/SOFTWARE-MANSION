@@ -120,7 +120,7 @@ class CodecTests(unittest.TestCase):
         self.assertNotIn(repr(KEY), repr(ACCOUNT))
 
     def test_rejects_unsupported_tokens_structure_timestamp_and_cipher(self):
-        for body in (b'"ADM-CID"0001L0#1234[]',
+        for body in (b'"UNKNOWN"0001L0#1234[]',
                      b'"SIA-DCS"0001L0#1234[bad]_invalid',
                      b'"SIA-DCS"0001L0#1234[bad][extra]',
                      b'"NULL"0001L0#1234[bad]',

@@ -11,23 +11,68 @@ Integrar eventos de intrusão ao MVP local, mantendo o contrato canônico, com
 adaptadores testáveis, mapa 2D e calendário de risco. Analytics é embarcado na
 câmera; o PSIM não analisa imagens. Homologação física permanece separada.
 
+### Limite da versão — decisão do usuário em 15/10/2026
+
+A versão em desenvolvimento integra apenas intrusão (centrais/sensores) e câmeras
+IP. Controle de acesso fica fora desta e de todas as demais sprints desta versão,
+apenas como possibilidade eventual de atualização futura, sem esforço ou compromisso
+agora, para evitar custos de protocolos, leituras e integrações desnecessários.
+Reconhecimento facial não é entrega comprometida desta versão nem nova frente.
+Analógicas permanecem fora; validação local e homologação física em segundo momento.
+Este limite não altera as demais tarefas, sua ordem ou os critérios deste plano;
+o fechamento continua exigindo o planejamento integral da sprint seguinte.
+
 ## Ordem de execução e aceite
+
+Revisão em 15/10/2026, antes do Dia 16: Dias 14 e 15 concluídos tecnicamente
+conforme seus DoDs (192 testes, smoke local e cobertura 94%). Homologação de
+equipamentos continua pendente. A ordem das tarefas restantes foi mantida.
+
+Resultado do Dia 16: recorte ADM-CID implementado e validado conforme seu DoD;
+200 testes Python, cobertura total 94% e módulo novo 96%, smoke com TCP/MQTT/banco.
+Próximo incremento: E6-007 (mapa 2D), com cadastro local de zonas a definir antes
+da implementação. Não há nova previsão em dias corridos sem dados de capacidade.
 
 | Ordem | Tarefa | Dependências | Aceite e validação |
 |---|---|---|---|
 | 1, executada | E7-001 e E7-002, ONVIF | MQTT, schema | DoDs dos Dias 11–13; homologação física pendente |
 | 2, Dia 14 | E7-003, receptor SIA-DCS TCP ASCII/AES | Referência de protocolo, MQTT, configuração por conta, biblioteca criptográfica prevista no mestre | Frame/CRC/tamanho, timestamp, chave por conta, normalização explícita, ACK após publicação; testes de rejeição, fragmentação e smoke TCP → MQTT |
 | 3, Dia 15 | E7-005, supervisão de comunicação | Receptor do Dia 14 aceito | Política registrada abaixo; ausência de RP gera timeout uma vez; retorno restaura supervisão; relógio controlado e smoke TCP/MQTT/CEP |
-| 4 | E7-004, Contact ID | Receptor e identificação do encapsulamento | Definir e documentar o transporte suportado antes de codificar; testes com mensagens conhecidas e smoke. Compatibilidade de central depende do protocolo confirmado |
+| 4, Dia 16 | E7-004, Contact ID | Receptor DC-09 dos Dias 14–15 | Subconjunto ADM-CID/TCP definido abaixo; testes de tradução/rejeição/retry, AES e smoke TCP → MQTT → banco. Compatibilidade física pendente |
 | 5 | E6-007, mapa 2D | HMI, cadastro local de zonas | Zonas configuráveis, estados com texto/ícone/cor, integração com eventos; testes frontend, build e verificação visual ISA-101 |
 | 6 | E4-008, calendário de risco | Política de sensibilidade explícita, CEP e configuração | Datas/horas/fuso e limites definidos antes de editar; testes de borda e regressão das regras R01/R02 |
 | 7 | Integração e fechamento | Incrementos anteriores aceitos | Smoke dos caminhos suportados, suíte/lint/build, pendências e backlog revisados; planejar toda a Sprint 3 antes de iniciá-la |
 
 O Dia 14 abrange o subconjunto SIA-DCS e controles NULL. ADM-CID, UDP,
 provisionamento/rotação de chaves DC-09-2026 e certificação não são aceites deste
-incremento. A cobertura exata de códigos e sintaxe será registrada no seu DoD.
+incremento histórico. Seu DoD registra códigos e sintaxe; ADM-CID foi acrescentado
+separadamente no Dia 16, com os limites abaixo.
 
-## Capacidade e incertezas
+## Políticas dos incrementos
+
+### Política do Dia 16, registrada antes da implementação
+
+- Implementar Contact ID encapsulado em DC-09/TCP (`ADM-CID`/`*ADM-CID`),
+  reaproveitando framing, CRC, AES-128/256, limites, timestamp e ACK após MQTT.
+  Mesma porta/configuração do receptor existente; nenhum servidor concorrente.
+- Sintaxe suportada: `#conta|1130 02 001` (qualificador + código, espaço,
+  partição de dois dígitos, espaço, zona de três dígitos). Conta interna deve
+  coincidir exatamente com a externa provisionada. Sem campos estendidos.
+- 130: BA/ACTIVE/CRITICAL ou BR/RESTORED/LOW; 137: TA/TAMPER/HIGH ou
+  TR/RESTORED/LOW, qualificadores 1 e 3 respectivamente. 602 com qualificador 1:
+  RP/ACTIVE/LOW, elegível para a supervisão RP do Dia 15. Outros códigos ou
+  qualificadores são rejeitados sem ACK, sem publicar ou renovar supervisão.
+- Preservar contrato canônico, ID da central e identidade estável em retries
+  datados; separar identidade ADM-CID da identidade SIA-DCS. Sem novos campos.
+- Referências de fabricante: [Ajax, formato ADM-CID](https://support.ajax.systems/en/manuals/cloud-signaling/)
+  e [Reconeyez, equivalência 130/137/602](https://support.reconeyez.com/docs/sia-dc-09-integration).
+  São referências de formato e mapeamento; não certificam a implementação.
+- Não implementar DTMF telefônico DC-05, handshake analógico, UDP, socket bruto
+  proprietário, dados estendidos ou códigos de controle de acesso. Modelo e
+  manual da central real continuam necessários para sua homologação.
+- Após este incremento: mapa 2D, calendário e integração/fechamento seguem os
+  critérios da tabela. Definir cadastro de zonas e política de risco antes das
+  respectivas implementações. Não iniciar Sprint 3 sem seu plano integral.
 
 ### Política do Dia 15, registrada antes da implementação
 
@@ -57,14 +102,17 @@ incremento. A cobertura exata de códigos e sintaxe será registrada no seu DoD.
   do alarme isolado. Hardware pendente. Essa complementação atende ao mesmo
   escopo E7-005; não muda a ordem, o schema ou as tarefas posteriores do plano.
 
+## Capacidade e incertezas
+
 Os números de dias identificam incrementos lógicos, não datas ou durações medidas.
 Não há dados de capacidade/horas disponíveis para estimar o restante com confiança.
 O cálculo anterior de 60 dias a partir de seis sprints não é prazo comprometido;
 o roadmap foi explicitamente classificado como intenção na documentação mestre.
 Confirmar estimativas no fechamento conforme evidências, sem inventar horas.
 
-Modelo da central, encapsulamento Contact ID e equipamento de bancada ainda não
-estão confirmados. Trabalhar com fixtures sintéticas e registrar essas pendências;
+Modelo da central, seu encapsulamento Contact ID efetivo e equipamento de bancada
+ainda não estão confirmados. O recorte local é ADM-CID/DC-09/TCP, sem prometer
+suporte a formatos proprietários. Trabalhar com fixtures sintéticas;
 não alegar homologação. Se uma dependência mudar o escopo ou a ordem, atualizar
 este plano antes de implementar o trabalho afetado.
 

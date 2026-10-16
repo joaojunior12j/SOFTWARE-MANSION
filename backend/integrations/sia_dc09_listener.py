@@ -1,4 +1,4 @@
-"""Local SIA-DCS TCP receiver: validate, normalize, publish, then ACK."""
+"""Local SIA-DCS/ADM-CID TCP receiver: validate, publish, then ACK."""
 
 import asyncio
 from collections import OrderedDict
@@ -18,6 +18,7 @@ from backend.integrations.sia_dc09 import (
     SIAAccount, SIAMessage, SIAProtocolError, acknowledge, parse_message,
 )
 from backend.integrations.sia_supervision import supervisor_from_settings
+from backend.integrations.contact_id_listener import translate_contact_id
 
 
 LOGGER = logging.getLogger(__name__)
@@ -38,6 +39,8 @@ def translate_message(message: SIAMessage, account: SIAAccount,
     """Translate supported event codes; NULL is control, never a fake RP."""
     if message.token == 'NULL':
         return None
+    if message.token == 'ADM-CID':
+        return translate_contact_id(message, account, received_at)
     if message.token != 'SIA-DCS':
         raise SIAProtocolError('unsupported inbound control message')
     match = EVENT.fullmatch(message.data)
@@ -112,8 +115,8 @@ class SIAReceiver:
             event = translate_message(message, account, now)
             fresh = True
             if event is not None:
-                identity = (message.account, message.sequence, message.data,
-                            message.timestamp)
+                identity = (message.token, message.account, message.sequence,
+                            message.data, message.timestamp)
                 clock = self.monotonic()
                 while self.seen:
                     oldest = next(iter(self.seen))

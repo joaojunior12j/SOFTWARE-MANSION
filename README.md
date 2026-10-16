@@ -3,6 +3,19 @@
 Fundacao do supervisório de segurança eletrônica descrito em
 `../DOCUMENTAÇÕES/SCRUM_PSIM_MANSION.md`.
 
+## Escopo da versão em desenvolvimento
+
+Decisão do usuário de 15/10/2026: concluir esta versão integrando apenas intrusão
+(centrais/sensores) e câmeras IP. Controle de acesso fica fora de todas as sprints
+desta versão, apenas como possibilidade eventual de atualização futura, sem esforço
+ou compromisso agora, evitando custos de protocolos, leituras e integrações
+desnecessários. Reconhecimento facial não é entrega comprometida nem nova frente.
+Os analíticos são embarcados na câmera; o PSIM recebe, normaliza, correlaciona e
+registra eventos, sem analisar imagens. Câmeras analógicas estão fora do escopo.
+A validação é local, com simulador e possível equipamento de bancada; homologação
+física fica para um segundo momento. Ao fechar cada sprint, planejar toda a
+seguinte, conforme a seção 11.1 do documento mestre.
+
 ## Dia 1 - infraestrutura
 
 O ambiente local contém apenas os componentes previstos para o Dia 1:
@@ -252,7 +265,8 @@ python -m tests.smoke_day14
 O bind padrão é loopback:5500, configurável em `integrations.sia_dc09`.
 Texto aberto fica desabilitado por padrão. A CLI configura uma conta por
 processo. O smoke usa contas e chaves sintéticas, TCP local e Mosquitto real.
-Homologação com central física, ADM-CID e supervisão de RP ainda estão pendentes.
+Homologação com central física permanece pendente. Supervisão de RP e o
+subconjunto ADM-CID foram acrescentados nos Dias 15 e 16, descritos abaixo.
 Consulte o [DoD do Dia 14](docs/SPRINT2_DAY14_DOD.md) e o
 [plano de continuidade](docs/SPRINT2_PLAN.md) para escopo e limites.
 
@@ -284,6 +298,29 @@ python -m tests.smoke_day15
 O smoke usa TCP/AES, Mosquitto e TimescaleDB reais, com dispositivos e operador
 sintéticos. Confira os limites e evidências no
 [DoD do Dia 15](docs/SPRINT2_DAY15_DOD.md). Homologação física permanece pendente.
+
+## Sprint 2 - Dia 16 - Contact ID sobre DC-09/TCP
+
+O mesmo receptor aceita `ADM-CID`/`*ADM-CID`, com payload como
+`#1234|1130 02 001`: qualificador 1/3, código, partição e zona. O recorte
+normaliza 130 (intrusão) para BA/BR e 137 (tamper) para TA/TR. O teste periódico
+1602 gera RP e renova a supervisão após validação/publicação. Outros códigos e
+variantes são rejeitados sem ACK. O contrato JSON permanece intacto.
+
+Use a configuração e as variáveis SIA já descritas. Inicie **um** receptor:
+
+```powershell
+python -m backend.integrations.contact_id_listener
+python -m tests.smoke_day16
+```
+
+O comando é uma entrada alternativa para o mesmo serviço SIA/Contact ID na porta
+5500; não execute ambos os listeners simultaneamente. AES-128/256, CRC,
+timestamp, limites, ACK após MQTT e deduplicação são compartilhados.
+O smoke verifica TCP → Mosquitto → TimescaleDB, com dados sintéticos e limpeza
+por UUID. DTMF telefônico, socket proprietário e dados estendidos não estão
+implementados. Consulte o [DoD do Dia 16](docs/SPRINT2_DAY16_DOD.md).
+Compatibilidade com a central real depende de confirmar modelo/manual e homologar.
 
 ## Pre-requisitos
 

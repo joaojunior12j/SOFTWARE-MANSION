@@ -1,7 +1,7 @@
-"""Bounded SIA DC-09 ASCII framing and AES-CBC for the SIA-DCS subset.
+"""Bounded SIA DC-09 ASCII framing and AES-CBC for SIA-DCS and ADM-CID.
 
 This is an independent protocol implementation, not a conformance claim for
-DC-09-2026. Extended data, ADM-CID and key provisioning are unsupported.
+DC-09-2026. Extended data and key provisioning are unsupported.
 """
 
 from dataclasses import dataclass, field
@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
 HEADER = re.compile(
-    rb'"(?P<token>\*?(?:SIA-DCS|NULL|ACK))"(?P<seq>[0-9]{4})'
+    rb'"(?P<token>\*?(?:SIA-DCS|ADM-CID|NULL|ACK))"(?P<seq>[0-9]{4})'
     rb'(?P<receiver>R[0-9A-Fa-f]{1,6})?(?P<prefix>L[0-9A-Fa-f]{1,6})'
     rb'#(?P<account>[0-9A-Fa-f]{1,16})\[',
 )
