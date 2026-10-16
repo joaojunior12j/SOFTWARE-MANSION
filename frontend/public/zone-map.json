@@ -1,0 +1,10 @@
+{
+  "title": "Perímetro norte",
+  "stale_after_seconds": 120,
+  "zones": [
+    { "id": "muro-norte", "name": "Muro norte", "account_id": "1234", "zone_partition": "01", "zone_number": 1, "x": 7, "y": 10, "width": 86, "height": 22, "devices": ["SEISMIC-MURO-NORTE", "BEAM-MURO-NORTE"] },
+    { "id": "pir-norte", "name": "Faixa de detecção", "account_id": "1234", "zone_partition": "01", "zone_number": 2, "x": 7, "y": 40, "width": 40, "height": 27, "devices": ["PIR-PERIMETRO-NORTE"] },
+    { "id": "camera-norte", "name": "Câmera norte", "account_id": "1234", "zone_partition": "01", "zone_number": 3, "x": 53, "y": 40, "width": 40, "height": 27, "devices": ["CAMERA-PERIMETRO-NORTE"] },
+    { "id": "central", "name": "Central de intrusão", "account_id": "1234", "zone_partition": "01", "zone_number": 0, "x": 28, "y": 76, "width": 44, "height": 18, "devices": ["CENTRAL-SIA-PRINCIPAL"] }
+  ]
+}

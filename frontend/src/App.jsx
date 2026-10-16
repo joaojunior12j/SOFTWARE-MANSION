@@ -4,13 +4,16 @@ import AcknowledgeDialog from "./components/AcknowledgeDialog.jsx";
 import AlarmList from "./components/AlarmList.jsx";
 import PriorityCounters from "./components/PriorityCounters.jsx";
 import StatusBar from "./components/StatusBar.jsx";
+import ZoneMap from "./components/ZoneMap.jsx";
 import { useAlarmFeed } from "./hooks/useAlarmFeed.js";
+import { useZoneMap } from "./hooks/useZoneMap.js";
 import { isUuid } from "./lib/alarm.js";
 
 const STORED_OPERATOR = "psim_operator_id";
 
 export default function App() {
-  const feed = useAlarmFeed();
+  const map = useZoneMap();
+  const feed = useAlarmFeed(map.acceptEvent, map.reset);
   const [operatorId, setOperatorId] = useState(
     () => localStorage.getItem(STORED_OPERATOR) || "",
   );
@@ -94,6 +97,9 @@ export default function App() {
             {actionError || feed.error}
           </div>
         )}
+        <ZoneMap config={map.config} error={map.error} state={map.state}
+          online={feed.streamOnline && feed.mqttOnline} />
+        <h2 className="alarm-section-title">Lista de alarmes</h2>
         <AlarmList alarms={feed.alarms} onAcknowledge={requestAcknowledge} />
       </main>
 

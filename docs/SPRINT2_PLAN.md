@@ -30,8 +30,11 @@ equipamentos continua pendente. A ordem das tarefas restantes foi mantida.
 
 Resultado do Dia 16: recorte ADM-CID implementado e validado conforme seu DoD;
 200 testes Python, cobertura total 94% e módulo novo 96%, smoke com TCP/MQTT/banco.
-Próximo incremento: E6-007 (mapa 2D), com cadastro local de zonas a definir antes
-da implementação. Não há nova previsão em dias corridos sem dados de capacidade.
+Resultado do Dia 17: E6-007 implementado como mapa esquemático com cadastro local,
+projeção por dispositivo e smoke MQTT/WebSocket/HMI. Quatorze testes frontend e
+build aprovados; evidências no DoD do Dia 17.
+Próximo incremento: E4-008 (calendário de risco), com política de sensibilidade
+a definir antes de implementar. Não há previsão em dias corridos sem capacidade.
 
 | Ordem | Tarefa | Dependências | Aceite e validação |
 |---|---|---|---|
@@ -39,7 +42,7 @@ da implementação. Não há nova previsão em dias corridos sem dados de capaci
 | 2, Dia 14 | E7-003, receptor SIA-DCS TCP ASCII/AES | Referência de protocolo, MQTT, configuração por conta, biblioteca criptográfica prevista no mestre | Frame/CRC/tamanho, timestamp, chave por conta, normalização explícita, ACK após publicação; testes de rejeição, fragmentação e smoke TCP → MQTT |
 | 3, Dia 15 | E7-005, supervisão de comunicação | Receptor do Dia 14 aceito | Política registrada abaixo; ausência de RP gera timeout uma vez; retorno restaura supervisão; relógio controlado e smoke TCP/MQTT/CEP |
 | 4, Dia 16 | E7-004, Contact ID | Receptor DC-09 dos Dias 14–15 | Subconjunto ADM-CID/TCP definido abaixo; testes de tradução/rejeição/retry, AES e smoke TCP → MQTT → banco. Compatibilidade física pendente |
-| 5 | E6-007, mapa 2D | HMI, cadastro local de zonas | Zonas configuráveis, estados com texto/ícone/cor, integração com eventos; testes frontend, build e verificação visual ISA-101 |
+| 5, Dia 17 executado | E6-007, mapa 2D | HMI, cadastro local de zonas | Zonas configuráveis, estados com texto/ícone/cor, integração com eventos; testes frontend, build e inspeção visual desktop/mobile aprovados conforme DoD |
 | 6 | E4-008, calendário de risco | Política de sensibilidade explícita, CEP e configuração | Datas/horas/fuso e limites definidos antes de editar; testes de borda e regressão das regras R01/R02 |
 | 7 | Integração e fechamento | Incrementos anteriores aceitos | Smoke dos caminhos suportados, suíte/lint/build, pendências e backlog revisados; planejar toda a Sprint 3 antes de iniciá-la |
 
@@ -49,6 +52,31 @@ incremento histórico. Seu DoD registra códigos e sintaxe; ADM-CID foi acrescen
 separadamente no Dia 16, com os limites abaixo.
 
 ## Políticas dos incrementos
+
+### Política do Dia 17, registrada antes da implementação
+
+- E6-007: mapa 2D esquemático, sem escala e sem alegar planta física homologada.
+  Cadastro local em `frontend/public/zone-map.json`: conta, partição, zona,
+  nome, retângulo em percentuais e lista explícita de dispositivos esperados.
+  Inicialmente usar apenas os IDs e zonas do simulador já existente.
+- Validar configuração, duplicatas e limites antes de exibir. Exibir erro se
+  inválida; nunca substituir silenciosamente por uma mansão fictícia.
+- Consumir o JSON canônico do WebSocket existente; sem mudar backend/schema.
+  Isolar conta/partição/zona/dispositivo e limitar memória ao cadastro. Ignorar
+  eventos desconhecidos, duplicados e fora de ordem por condição/dispositivo.
+- Condições independentes: BA/BR para intrusão, TA/TR para tamper; desconexão e
+  timeout para comunicação, retorno RP/RESTORED para comunicação. RP/ACTIVE é
+  heartbeat e não prova restauração. Não limpar uma condição por outra.
+- Zonas sem evidência, dispositivos ainda não observados, conexão indisponível
+  ou confirmação vencida não ficam normais. Prazo de confirmação configurável
+  (120s de bancada). Anormalidades persistem até restauração da mesma condição;
+  reconectar descarta a projeção volátil e exige nova confirmação.
+- Mostrar texto, símbolo e cor por estado/prioridade, fundo neutro, seleção por
+  mouse/teclado e detalhe com dispositivos, horários e condições. Mapa não
+  reconhece/limpa alarmes; lista e diálogo ISA-18.2 existentes permanecem.
+- Aceite: testes de isolamento, restauração, prioridade, ordem, configuração e
+  perda de feed; build; inspeção visual desktop/mobile e smoke de evento real
+  MQTT → WebSocket → indicador. Sem dados físicos ou segredos versionados.
 
 ### Política do Dia 16, registrada antes da implementação
 

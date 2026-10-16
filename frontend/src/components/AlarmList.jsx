@@ -6,7 +6,7 @@ export default function AlarmList({ alarms, onAcknowledge }) {
       <div className="empty-state">
         <span aria-hidden="true">✓</span>
         <h2>Nenhum alarme ativo</h2>
-        <p>O sistema está monitorando todos os subsistemas.</p>
+        <p>Nenhum incidente na lista. Consulte o mapa para os estados observados.</p>
       </div>
     );
   }

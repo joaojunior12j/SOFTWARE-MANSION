@@ -322,6 +322,38 @@ por UUID. DTMF telefônico, socket proprietário e dados estendidos não estão
 implementados. Consulte o [DoD do Dia 16](docs/SPRINT2_DAY16_DOD.md).
 Compatibilidade com a central real depende de confirmar modelo/manual e homologar.
 
+## Sprint 2 - Dia 17 - Mapa 2D de zonas
+
+A HMI apresenta um mapa esquemático com seleção por mouse/teclado e detalhe dos
+dispositivos. Cada estado usa texto, símbolo e cor; zonas sem confirmação ficam
+neutras. RP não apaga intrusão, e a restauração de um dispositivo não limpa outro.
+O mapa usa eventos do WebSocket existente; reconhecer alarmes continua na lista.
+
+Edite `frontend/public/zone-map.json` para cadastrar conta, partição, número de
+zona, dispositivos e retângulos em percentuais (`x`, `y`, `width`, `height`).
+O cadastro inicial corresponde ao simulador da conta `1234`, não à planta real.
+Adapte os IDs aos equipamentos provisionados antes de utilizá-los. O prazo
+`stale_after_seconds` vale 120s para a confirmação local. Recarregue a página
+após editar; em produção, gere novamente o build.
+
+Ao abrir/reconectar, o mapa exige nova evidência. Não carrega estado histórico.
+Falhas conhecidas permanecem indicadas enquanto a sessão perde confirmação;
+retorno de conexão reinicia essa projeção. A lista de alarmes mantém seu fluxo
+persistido separado. Consulte [política e DoD do Dia 17](docs/SPRINT2_DAY17_DOD.md).
+
+```powershell
+cd frontend
+npm test -- --experimental-test-coverage --test-coverage-include=src/lib/zoneMap.js
+npm run build
+npm run dev
+```
+
+Com API e Mosquitto locais ativos, o cenário existente alimenta o mapa:
+
+```powershell
+python -m backend.simulator.cli --scenario wall_jump --account 1234
+```
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;
