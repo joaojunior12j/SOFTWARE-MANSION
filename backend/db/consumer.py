@@ -15,6 +15,7 @@ from backend.core.correlation_engine import CorrelationEngine
 from backend.core.correlation_rules import build_rules
 from backend.core.settings import load_settings
 from backend.core.topics import event_subscription_topic
+from backend.db.alarm_repository import AlarmRepository
 from backend.db.correlation_repository import CorrelationRepository
 from backend.db.repository import EventRepository
 
@@ -44,6 +45,7 @@ class EventConsumer:
         client: mqtt.Client | None = None,
         correlation_engine: CorrelationEngine | None = None,
         correlation_repository: CorrelationRepository | None = None,
+        alarm_repository: AlarmRepository | None = None,
     ) -> None:
         self.host = host
         self.port = port
@@ -52,6 +54,7 @@ class EventConsumer:
         self.repository = repository
         self.correlation_engine = correlation_engine
         self.correlation_repository = correlation_repository
+        self.alarm_repository = alarm_repository
         self.loop = loop
         self.client = client or mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
@@ -112,6 +115,8 @@ class EventConsumer:
     ) -> None:
         """Persist an event before evaluating and storing correlations."""
         await self.repository.save(event, raw_payload)
+        if self.alarm_repository is not None:
+            await self.alarm_repository.record_communication_timeout(event)
         if self.correlation_engine is None:
             return
         if self.correlation_repository is None:
@@ -154,6 +159,7 @@ async def run() -> None:
         loop=asyncio.get_running_loop(),
         correlation_engine=correlation_engine,
         correlation_repository=correlation_repository,
+        alarm_repository=AlarmRepository(engine=repository.engine),
     )
     await consumer.start()
     LOGGER.info("consuming %s", consumer.topic)

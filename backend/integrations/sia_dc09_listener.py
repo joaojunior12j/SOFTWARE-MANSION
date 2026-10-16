@@ -17,6 +17,7 @@ from backend.core.settings import load_settings
 from backend.integrations.sia_dc09 import (
     SIAAccount, SIAMessage, SIAProtocolError, acknowledge, parse_message,
 )
+from backend.integrations.sia_supervision import supervisor_from_settings
 
 
 LOGGER = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class SIAReceiver:
                  read_timeout=10, max_clock_skew=20,
                  dedup_seconds=120, dedup_capacity=1024,
                  now=None, monotonic=None, max_connections=16,
-                 publish_timeout=5):
+                 publish_timeout=5, supervisor=None):
         if (not accounts or not 1 <= max_frame_bytes <= 4095
                 or min(read_timeout, max_clock_skew, dedup_seconds,
                        dedup_capacity, max_connections, publish_timeout) <= 0):
@@ -85,7 +86,12 @@ class SIAReceiver:
         self.dedup_capacity = dedup_capacity
         self.now = now or (lambda: datetime.now(timezone.utc))
         self.monotonic = monotonic or time.monotonic
-        self.lock = asyncio.Lock()
+        if supervisor is not None and supervisor.accounts != accounts:
+            raise ValueError('SIA supervision/receiver account mismatch')
+        self.supervisor = supervisor
+        self.lock = (
+            supervisor.lock if supervisor is not None else asyncio.Lock()
+        )
         self.seen = OrderedDict()
         self.max_connections = max_connections
         self.connections = set()
@@ -95,18 +101,19 @@ class SIAReceiver:
         """Return ACK only after successful processing, or a safe rejection."""
         message = parse_message(frame, self.accounts, self.max_frame_bytes)
         account = self.accounts[message.account]
-        now = self.now()
-        if now.tzinfo is None or now.utcoffset() is None:
-            raise ValueError('receiver clock must be timezone-aware')
-        if message.timestamp is not None and abs(
-            (now - message.timestamp).total_seconds(),
-        ) > self.max_clock_skew:
-            raise SIAProtocolError('SIA timestamp outside acceptance window')
-        event = translate_message(message, account, now)
-        if event is not None:
-            identity = (message.account, message.sequence, message.data,
-                        message.timestamp)
-            async with self.lock:
+        async with self.lock:
+            now = self.now()
+            if now.tzinfo is None or now.utcoffset() is None:
+                raise ValueError('receiver clock must be timezone-aware')
+            if message.timestamp is not None and abs(
+                (now - message.timestamp).total_seconds(),
+            ) > self.max_clock_skew:
+                raise SIAProtocolError('SIA timestamp outside accepted window')
+            event = translate_message(message, account, now)
+            fresh = True
+            if event is not None:
+                identity = (message.account, message.sequence, message.data,
+                            message.timestamp)
                 clock = self.monotonic()
                 while self.seen:
                     oldest = next(iter(self.seen))
@@ -123,6 +130,10 @@ class SIAReceiver:
                     self.seen[identity] = self.monotonic()
                     while len(self.seen) > self.dedup_capacity:
                         self.seen.popitem(last=False)
+                else:
+                    fresh = False
+            if self.supervisor is not None and fresh:
+                self.supervisor.observe(message, event, now)
         return acknowledge(message, account, now)
 
     async def read_frame(self, reader):
@@ -188,16 +199,26 @@ async def serve(settings, account):
     """Run the local TCP receiver with its own MQTT client ID."""
     mqtt_settings = settings['mqtt']
     sia_settings = settings['integrations']['sia_dc09']
+    queue_limit = sia_settings.get('mqtt_max_queued_messages', 128)
+    if not isinstance(queue_limit, int) or queue_limit <= 0:
+        raise ValueError('SIA MQTT queue limit must be a positive integer')
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
+                         client_id=f'psim-sia-{uuid4()}')
+    client.max_queued_messages_set(queue_limit)
     publisher = EventPublisher(
         mqtt_settings['host'], mqtt_settings['port'],
         mqtt_settings['keepalive'],
-        client=mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
-                           client_id=f'psim-sia-{uuid4()}'),
+        client=client,
     )
     try:
         await asyncio.to_thread(publisher.connect)
+        accounts = {account.account_id: account}
+        supervisor = supervisor_from_settings(
+            sia_settings.get('supervision', {'enabled': False}),
+            accounts, publisher,
+        )
         receiver = SIAReceiver(
-            {account.account_id: account}, publisher,
+            accounts, publisher,
             max_frame_bytes=sia_settings['max_frame_bytes'],
             read_timeout=sia_settings['read_timeout_seconds'],
             max_clock_skew=sia_settings['max_clock_skew_seconds'],
@@ -205,13 +226,17 @@ async def serve(settings, account):
             dedup_capacity=sia_settings['dedup_capacity'],
             max_connections=sia_settings['max_connections'],
             publish_timeout=sia_settings['publish_timeout_seconds'],
+            supervisor=supervisor,
         )
         server = await asyncio.start_server(
             receiver.handle_client, sia_settings['host'], sia_settings['port'],
             limit=sia_settings['max_frame_bytes'] + 10,
         )
         async with server:
-            await server.serve_forever()
+            async with asyncio.TaskGroup() as tasks:
+                if supervisor is not None:
+                    tasks.create_task(supervisor.run())
+                await server.serve_forever()
     finally:
         await asyncio.to_thread(publisher.close)
 
@@ -224,7 +249,7 @@ def main():
         asyncio.run(serve(settings, account))
     except KeyboardInterrupt:
         pass
-    except (ValueError, RuntimeError, OSError):
+    except (ValueError, RuntimeError, OSError, ExceptionGroup):
         raise SystemExit('SIA receiver failed; check local settings/services')
 
 

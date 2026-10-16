@@ -320,11 +320,21 @@ class ServeTests(unittest.IsolatedAsyncioTestCase):
                         'dedup_capacity': 1024, 'max_connections': 16,
                         'publish_timeout_seconds': 5,
                         'host': '127.0.0.1', 'port': 5500,
+                        'supervision': {
+                            'enabled': True, 'timeout_seconds': 60,
+                            'check_interval_seconds': 1,
+                            'account_timeouts': {}, 'heartbeat_mode': 'rp',
+                            'publish_timeout_seconds': 5,
+                        },
                     }}}
-        with patch('backend.integrations.sia_dc09_listener.EventPublisher',
+        with patch('backend.integrations.sia_dc09_listener.mqtt.Client') \
+                as mqtt_client, patch(
+                   'backend.integrations.sia_dc09_listener.EventPublisher',
                    return_value=publisher), patch('asyncio.start_server',
                                                   return_value=server):
             with self.assertRaises(asyncio.CancelledError):
                 await serve(settings, ACCOUNT)
         publisher.connect.assert_called_once()
         publisher.close.assert_called_once()
+        queue_setter = mqtt_client.return_value.max_queued_messages_set
+        queue_setter.assert_called_once_with(128)

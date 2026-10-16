@@ -7,7 +7,21 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from backend.api.schemas import AlarmRead
+from backend.api.schemas import AlarmEvent, AlarmRead
+
+
+INSERT_COMMUNICATION_ALARM_SQL = text(
+    """
+    INSERT INTO alarms (
+        alarm_id, title, description, priority_level, state,
+        zone_partition, triggered_at
+    ) VALUES (
+        :alarm_id, :title, :description, 'HIGH', 'UNACKNOWLEDGED',
+        :zone_partition, :triggered_at
+    )
+    ON CONFLICT (alarm_id) DO NOTHING
+    """
+)
 
 
 LIST_ACTIVE_ALARMS_SQL = text(
@@ -30,6 +44,8 @@ LIST_ACTIVE_ALARMS_SQL = text(
                 SELECT DISTINCT event.sia_code
                 FROM events AS event
                 WHERE event.correlation_id = alarms.correlation_id
+                   OR (alarms.correlation_id IS NULL
+                       AND event.event_id = alarms.alarm_id)
                 ORDER BY event.sia_code
             ),
             ARRAY[]::VARCHAR[]
@@ -88,6 +104,8 @@ ACKNOWLEDGE_ALARM_SQL = text(
                 SELECT DISTINCT event.sia_code
                 FROM events AS event
                 WHERE event.correlation_id = alarms.correlation_id
+                   OR (alarms.correlation_id IS NULL
+                       AND event.event_id = alarms.alarm_id)
                 ORDER BY event.sia_code
             ),
             ARRAY[]::VARCHAR[]
@@ -106,6 +124,32 @@ class InvalidAlarmTransitionError(ValueError):
 
 class AlarmRepository:
     """Load active alarms in operator priority order."""
+
+    async def record_communication_timeout(self, event: AlarmEvent) -> None:
+        """Project an actionable SIA failure without consuming CEP evidence.
+
+        Alarm ID equals the event UUID for idempotent retries. No correlation
+        is assigned, so R01 may still use this event. Restoration does not ACK
+        or clear operational alarms; the operator workflow remains unchanged.
+        """
+        if (event.source_type != 'ALARM_PANEL'
+                or event.event_status != 'TIMEOUT_SIA_DC09'):
+            return
+        parameters = {
+            'alarm_id': str(event.event_id),
+            'title': 'FALHA DE COMUNICAÇÃO — CENTRAL SIA',
+            'description': (
+                f'Conta {event.account_id}, '
+                f'central {event.device_hardware_id}. '
+                f'Supervisão expirada. Evento {event.event_id}.'
+            ),
+            'zone_partition': event.zone_partition,
+            'triggered_at': event.timestamp,
+        }
+        async with self.engine.begin() as connection:
+            await connection.execute(
+                INSERT_COMMUNICATION_ALARM_SQL, parameters,
+            )
 
     def __init__(
         self,

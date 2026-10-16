@@ -36,6 +36,14 @@ integrations:
     dedup_seconds: 120
     dedup_capacity: 1024
     max_connections: 16
+    mqtt_max_queued_messages: 128
+    supervision:
+      enabled: true
+      heartbeat_mode: "rp"
+      timeout_seconds: 60
+      check_interval_seconds: 1
+      publish_timeout_seconds: 5
+      account_timeouts: {}
   onvif:
     pull_timeout_seconds: 5
     message_limit: 10

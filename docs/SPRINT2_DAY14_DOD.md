@@ -1,5 +1,9 @@
 # Sprint 2 - Dia 14 - Receptor SIA-DCS TCP
 
+Registro histórico do Dia 14. A supervisão de RP mencionada como pendente
+foi implementada no [Dia 15](SPRINT2_DAY15_DOD.md); homologação física continua
+pendente.
+
 ## Escopo do incremento E7-003
 
 Receptor local independente de SIA-DCS sobre TCP, com parser ASCII,

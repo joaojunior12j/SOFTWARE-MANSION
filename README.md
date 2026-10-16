@@ -256,6 +256,35 @@ Homologação com central física, ADM-CID e supervisão de RP ainda estão pend
 Consulte o [DoD do Dia 14](docs/SPRINT2_DAY14_DOD.md) e o
 [plano de continuidade](docs/SPRINT2_PLAN.md) para escopo e limites.
 
+## Sprint 2 - Dia 15 - Supervisão SIA e alarme de comunicação
+
+O receptor monitora RP válido por conta, com prazo inicial de 60s configurável.
+Ao expirar, publica um único `TIMEOUT_SIA_DC09` HIGH; um RP novo após a falha
+gera retorno `RESTORED` LOW. Prazos usam relógio monotônico. Rejeições e
+retransmissões não renovam o monitor. O modo `any_valid_message` permite usar
+NULL e outros frames válidos, sem fabricar eventos RP a partir de NULL.
+
+O consumer grava o alarme de comunicação HIGH sem impedir que o timeout participe
+da R01. Retorno não reconhece nem limpa alarmes automaticamente. Para carregar
+as alterações, reinicie o receptor e o consumer nos seus terminais:
+
+```powershell
+python -m backend.db.consumer
+python -m backend.integrations.sia_dc09_listener
+```
+
+A configuração fica em `integrations.sia_dc09.supervision`; há prazo default,
+overrides por conta, intervalo de verificação e opção de desativação explícita.
+A fila MQTT do receptor também possui limite. Valide com:
+
+```powershell
+python -m tests.smoke_day15
+```
+
+O smoke usa TCP/AES, Mosquitto e TimescaleDB reais, com dispositivos e operador
+sintéticos. Confira os limites e evidências no
+[DoD do Dia 15](docs/SPRINT2_DAY15_DOD.md). Homologação física permanece pendente.
+
 ## Pre-requisitos
 
 - Docker com o plugin Docker Compose;
