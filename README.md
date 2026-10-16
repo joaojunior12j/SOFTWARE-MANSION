@@ -3,6 +3,19 @@
 Fundacao do supervisório de segurança eletrônica descrito em
 `../DOCUMENTAÇÕES/SCRUM_PSIM_MANSION.md`.
 
+## Situação das sprints
+
+Sprint 2 encerrada no recorte técnico local: 213 testes Python, 17 frontend,
+94% de cobertura backend e smokes de integração aprovados. Homologação física
+continua pendente. Sprint 3 planejada, ainda não iniciada, com prazo em aberto
+por disponibilidade variável informada pelo usuário.
+
+- [Fechamento da Sprint 2](docs/SPRINT2_CLOSEOUT.md)
+- [Backlog revisado](docs/BACKLOG_STATUS.md)
+- [Plano completo da Sprint 3](docs/SPRINT3_PLAN.md): identidade/JWT, permissões,
+  auditoria, histórico/dispositivos, timeline e relatório PDF. Primeiro incremento:
+  Dia 21, fundação de identidade e migrações.
+
 ## Escopo da versão em desenvolvimento
 
 Decisão do usuário de 15/10/2026: concluir esta versão integrando apenas intrusão

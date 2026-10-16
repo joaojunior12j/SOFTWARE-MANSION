@@ -1,5 +1,9 @@
 # Sprint 2 - Plano de continuidade
 
+**Status: encerrada no recorte técnico local.** Evidências e pendências em
+[SPRINT2_CLOSEOUT.md](SPRINT2_CLOSEOUT.md). A Sprint 3 está integralmente
+planejada em [SPRINT3_PLAN.md](SPRINT3_PLAN.md), ainda não iniciada.
+
 Registro em 15/10/2026, antes do Dia 14, conforme seção 11.1 do documento mestre.
 Os Dias 11–13 já foram executados; seus DoDs são as evidências históricas.
 Não havia plano consolidado no repositório. Este registro organiza a continuidade
@@ -36,8 +40,9 @@ build aprovados; evidências no DoD do Dia 17.
 Resultado do Dia 18: E4-008 implementado no PIR simulado e indicador API/HMI;
 213 testes Python e 17 frontend, cobertura total backend 94% e módulos novos
 de calendário/API 100%; build e smoke com relógio controlado aprovados.
-Próximo incremento: integração e fechamento da Sprint 2, incluindo plano integral
-da Sprint 3. Não há previsão em dias corridos sem dados de capacidade.
+Resultado do fechamento (incrementos lógicos 19–20): suíte, lint, build e smokes
+aprovados; backlog revisado e Sprint 3 planejada. Capacidade informada pelo usuário:
+sem disponibilidade fixa, prazo em aberto. Não há estimativa em dias corridos.
 
 | Ordem | Tarefa | Dependências | Aceite e validação |
 |---|---|---|---|
@@ -47,7 +52,7 @@ da Sprint 3. Não há previsão em dias corridos sem dados de capacidade.
 | 4, Dia 16 | E7-004, Contact ID | Receptor DC-09 dos Dias 14–15 | Subconjunto ADM-CID/TCP definido abaixo; testes de tradução/rejeição/retry, AES e smoke TCP → MQTT → banco. Compatibilidade física pendente |
 | 5, Dia 17 executado | E6-007, mapa 2D | HMI, cadastro local de zonas | Zonas configuráveis, estados com texto/ícone/cor, integração com eventos; testes frontend, build e inspeção visual desktop/mobile aprovados conforme DoD |
 | 6, Dia 18 executado | E4-008, calendário de risco | Política registrada abaixo, simulador e configuração | Calendário local, ajuste PIR simulado e API/HMI; testes de borda, regressão R01/R02 e smoke aprovados conforme DoD |
-| 7 | Integração e fechamento | Incrementos anteriores aceitos | Smoke dos caminhos suportados, suíte/lint/build, pendências e backlog revisados; planejar toda a Sprint 3 antes de iniciá-la |
+| 7, encerrada | Integração e fechamento | Incrementos anteriores aceitos | Smokes, suíte/lint/build, backlog e plano integral da Sprint 3 concluídos; evidências no fechamento |
 
 O Dia 14 abrange o subconjunto SIA-DCS e controles NULL. ADM-CID, UDP,
 provisionamento/rotação de chaves DC-09-2026 e certificação não são aceites deste
